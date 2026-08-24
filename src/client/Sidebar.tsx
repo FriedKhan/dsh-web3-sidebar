@@ -553,11 +553,12 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore }) {
   /**
    * Subagent auto-activation: the moment the current conversation spawns its
    * FIRST direct subagent (a 0 → N transition on the list feed), the "auto
-   * open" pref is on, and the Subagent tab type is enabled in settings,
-   * focus the Subagent page (single-instance: an existing tab is focused,
-   * never duplicated). On wide viewports the right panel also expands; on
-   * narrow viewports background activity never forces the full-screen drawer
-   * open over the chat.
+   * open" pref is on, and the Tasks tab type is enabled in settings, activate
+   * the Tasks page. Single-instance semantics focus an existing pane tab in
+   * place or raise an existing free window; a new tab lands in the right pane
+   * and is never duplicated. On wide viewports the right panel also expands;
+   * on narrow viewports background activity never forces the full-screen
+   * drawer open over the chat.
    * Switching to a session that already has subagents never triggers — its
    * baseline starts at the current count — so a deliberate layout is never
    * fought.
@@ -589,8 +590,9 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore }) {
       if (!isNarrowWidth(window.innerWidth)) {
         store.reduce(s => s.panelOpen ? s : togglePanel(s))
       }
-      // Pin the landing to the right panel: the auto-activated Subagent page
-      // must be ready there, not in a bottom-panel pane the user last touched.
+      // Choose the right panel as the landing pane for a newly created Tasks
+      // tab. Single-instance dedupe still activates an existing pane tab in
+      // place or raises an existing free window.
       store.reduce(s => ({ ...s, activePane: firstLeaf(s.splits).id }))
       ctx.get('betterSidebar')?.openTab({ type: 'subagent', title: t('subagent') })
     }, AUTO_OPEN_DEBOUNCE_MS)
@@ -607,11 +609,12 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore }) {
   /**
    * Job auto-activation: the moment a NEW background job appears for the
    * current conversation (a job id the previous snapshot lacked), the
-   * auto-open pref is on, and the Jobs tab type is enabled, focus the Jobs
-   * page. The right panel expands only on wide viewports. Unlike the subagent
-   * trigger (0 → N only), ANY new job id triggers: the agent may start several
-   * jobs in one session, and each should surface. A fresh page load never
-   * triggers — its baseline starts at the current snapshot.
+   * auto-open pref is on, and the Tasks tab type is enabled, activate the Tasks
+   * page that contains the background-jobs section. The right panel expands
+   * only on wide viewports. Unlike the subagent trigger (0 → N only), ANY
+   * new job id triggers: the agent may start several jobs in one session, and
+   * each should surface. A fresh page load never triggers — its baseline starts
+   * at the current snapshot.
    */
   const jobBaselineRef = useRef<SidebarSessionList | undefined>(undefined)
   useEffect(() => {

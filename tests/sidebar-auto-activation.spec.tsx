@@ -1,7 +1,7 @@
 /**
- * Real-Sidebar regressions for issue #162: background activity should focus
- * the Subagent page on every viewport, but a narrow full-screen drawer must
- * stay folded until the user chooses to open it.
+ * Real-Sidebar regressions for issue #162: background activity should activate
+ * the Tasks page on every viewport, but must not force a narrow full-screen
+ * drawer open over the chat.
  */
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -56,7 +56,7 @@ function setViewport(width: number): void {
   Object.defineProperty(window, 'innerWidth', { configurable: true, value: width })
 }
 
-function mountSidebar(width: number): MountedSidebar {
+function mountSidebar(width: number, panelOpen = false): MountedSidebar {
   setViewport(width)
   vi.stubGlobal('WebSocket', FakeWebSocket)
   const sessionId = `auto-activation-${++sessionSeq}`
@@ -71,7 +71,7 @@ function mountSidebar(width: number): MountedSidebar {
   const store = createSidebarStore()
   store.setPrefs({ ...store.getPrefs(), autoOpenSubagent: true, autoOpenJobs: true })
   store.setSession(sessionId)
-  store.reduce(state => ({ ...state, panelOpen: false }))
+  store.reduce(state => ({ ...state, panelOpen }))
   const service = createBetterSidebarService(store)
   service.registerTab({ id: 'subagent', title: 'Subagent', component: () => null })
   const localeSnapshot = { active: 'en' }
@@ -182,6 +182,17 @@ describe('Sidebar background-activity auto-activation (#162)', () => {
       publishJob(sidebar)
     }
     expectSubagentFocused(sidebar, opens)
+  })
+
+  it.each(['subagent', 'job'] as const)('%s activation preserves an already-open narrow drawer', (source) => {
+    const sidebar = mountSidebar(390, true)
+    if (source === 'subagent') {
+      publishSubagent(sidebar)
+      flushSubagentDebounce()
+    } else {
+      publishJob(sidebar)
+    }
+    expectSubagentFocused(sidebar, true)
   })
 
   it('uses the current viewport when the delayed subagent activation fires', () => {
