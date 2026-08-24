@@ -34,6 +34,15 @@ export const builtinTabPlugins: readonly PluginEntry[] = [
     install: 'cd ~/.dsh && dsh plugin --profile web add dsh-better-sidebar && dsh plugin --profile web add git+https://github.com/Fisfzy/ego-browser.git',
   },
   {
+    id: 'dsh-better-overleaf',
+    name: 'dsh-better-overleaf Overleaf 标签页',
+    url: 'https://github.com/Hoemr/dsh-better-overleaf',
+    description: () => t('pluginBetterOverleafDesc'),
+    // Published on npm; peer-depends on dsh-better-sidebar (Overleaf tab),
+    // so the install line installs the prerequisite first.
+    install: 'cd ~/.dsh && dsh plugin --profile web add dsh-better-sidebar && dsh plugin --profile web add dsh-better-overleaf',
+  },
+  {
     id: 'dsh-docs-panel',
     name: 'dsh-docs-panel 全局文档',
     url: 'https://github.com/mlosun/dsh-docs-panel',
