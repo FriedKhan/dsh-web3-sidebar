@@ -369,6 +369,8 @@ export const zh = {
   pluginFlowglassDesc: '实时会话流程图：三列泳道展示用户、助手与工具调用，支持并行分组、子代理支线、逐层钻取和实时状态；安装 better-sidebar 后注册原生「流镜」Tab，未安装时保留独立抽屉',
   pluginGitForgeDesc: 'better-sidebar「Git 凭据」Tab：GitHub/Gitea 等 Forge 账号库 + 按项目授权 + push 策略硬拦；token 仅存本地 secrets，不进模型上下文；提供只读 GitForge 工具与 agent HTTPS credential helper',
   pluginGithubWorkbenchDesc: 'better-sidebar「GitHub 工作台」Tab：远端仓库目录树 + Issues / Pull requests / Actions 页签，读之外支持新建 Issue/PR、评论、编辑、关闭重开、squash·merge·rebase 合并（强确认）与重跑/取消 CI；仓库弹层自动拉取有权限列表并支持公开仓搜索；未装 better-sidebar 时自动降级为独立右侧面板',
+  pluginSuhuangScrollDesc: '把本地苏黄共阅 Runtime 接入 DSH 设置与 better-sidebar，支持模型配置、连接测试和连续阅卷控制；使用前需安装 Suhuang Scroll Runtime 与 dsh-better-sidebar',
+  pluginSuhuangScrollDesc: 'Connect the local Suhuang Scroll Runtime to DSH settings and better-sidebar for model configuration, connection tests, and continuous grading controls; requires Suhuang Scroll Runtime and dsh-better-sidebar',
   pluginGitRemotesDesc: 'better-sidebar Git 远程 Tab：看分支/上游/ahead-behind，fetch（可 prune）、ff-only pull、确认后才 push。不替换内置 Git 的暂存/提交，也不提供 force-push 或模型自动推送',
   pluginSentinelDesc: '条件驱动的 agent 唤醒系统：文件/进程/端口/HTTP/命令/webhook 传感器，条件达成自动唤醒休眠会话；注册「哨兵」Tab 展示服务器全局监控表',
   pluginServerDeckDesc: '服务器卡片仪表盘：每台服务器一张卡片，展示在线状态、OS、运行时长、CPU/内存/磁盘用量与延迟；点卡片进入 xterm.js 交互终端，支持 ~/.ssh/config 一键导入（自动跳过 Git 托管别名）；安装 better-sidebar 后注册原生「服务器」Tab，未安装时保留独立抽屉',

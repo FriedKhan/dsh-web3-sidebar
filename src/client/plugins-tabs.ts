@@ -106,6 +106,15 @@ export const builtinTabPlugins: readonly PluginEntry[] = [
     install: 'cd ~/.dsh && dsh plugin --profile web add dsh-better-sidebar && dsh plugin --profile web add dsh-server-deck@latest',
   },
   {
+    id: 'dsh-suhuang-scroll',
+    name: 'dsh-suhuang-scroll 苏黄共阅',
+    url: 'https://github.com/YZDame/dsh-suhuang-scroll',
+    description: () => t('pluginSuhuangScrollDesc'),
+    // Suhuang Scroll is a DSH Web plugin whose runtime console registers in
+    // better-sidebar. Install the sidebar prerequisite before the npm package.
+    install: 'cd ~/.dsh && dsh plugin --profile web add dsh-better-sidebar && dsh plugin --profile web add dsh-suhuang-scroll',
+  },
+  {
     id: 'dsh-ssh-tunnel',
     name: 'dsh-ssh-tunnel SSH 隧道',
     url: 'https://github.com/thirsty5034/dsh-ssh-tunnel',
