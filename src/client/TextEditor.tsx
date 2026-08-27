@@ -28,6 +28,7 @@ import { cmSurfaceTheme, CmThemeCompartment } from './cm-themes.ts'
 import { isDarkScheme, subscribeColorScheme } from './theme.ts'
 import { SandboxStatusBar } from './SandboxStatusBar.tsx'
 import { appendToDraft } from './conversation-draft.ts'
+import { useSelectionPopup } from './selection-popup.ts'
 import { buildSelectionInsert, linesOfSelection } from './selection-payload.ts'
 import { lazyChunkComponent } from './lazy-chunk.tsx'
 import { analyzeMarkdownHtml } from './markdown-html.ts'
@@ -40,13 +41,6 @@ import css from './sidebar.module.css'
 
 /** Previewable files (rendered output vs source editing). */
 type ViewMode = 'preview' | 'edit'
-
-/** The floating "add to conversation" action: payload + viewport anchor. */
-interface SelectionPopup {
-  insert: string
-  left: number
-  top: number
-}
 
 /**
  * The sandbox tokens of the HTML preview iframe. NO allow-same-origin (the
@@ -71,36 +65,23 @@ export function TextEditor(props: FileViewerProps) {
   const themeCompRef = useRef<CmThemeCompartment | null>(null)
   /** The app's resolved color scheme; the editor re-themes in place on flips. */
   const [dark, setDark] = useState(() => isDarkScheme())
-  /** The floating "add to conversation" popup (viewport-anchored; null = hidden). */
-  const [popup, setPopup] = useState<SelectionPopup | null>(null)
-  /** Live mirror of the popup state for click-time reads (no re-render race). */
-  const popupRef = useRef<SelectionPopup | null>(null)
   /** The markdown preview container (selection-containment + line lookup). */
   const mdRef = useRef<HTMLDivElement>(null)
+  const markdown = viewerId === 'markdown'
+  const html = viewerId === 'html'
 
-  const hidePopup = (): void => {
-    popupRef.current = null
-    setPopup(null)
-  }
-
-  /** Anchor the popup above the selection center; clamp inside the viewport. */
-  const showPopup = (insert: string, left: number, top: number): void => {
-    const next: SelectionPopup = {
-      insert,
-      left: Math.min(Math.max(left, 80), window.innerWidth - 80),
-      top,
-    }
-    popupRef.current = next
-    setPopup(next)
-  }
-
-  /** The popup button's click: insert the stored payload into the draft. */
-  const commitPopup = (): void => {
-    const current = popupRef.current
-    if (current === null) return
-    appendToDraft(ctx, scope.sessionId, current.insert)
-    hidePopup()
-  }
+  /**
+   * The floating "add to conversation" popup (viewport-anchored; null =
+   * hidden). The hook owns show/hide/commit plus the global dismissal
+   * listeners (outside mousedown, Escape, hidden tab/window, surface
+   * leaving the viewport) — see selection-popup.ts.
+   */
+  const selectionPopup = useSelectionPopup({
+    onCommit: (insert) => { appendToDraft(ctx, scope.sessionId, insert) },
+    // The surface that must stay on screen: the markdown preview container
+    // in preview mode, the CodeMirror host otherwise.
+    getSurface: () => (markdown && mode === 'preview' ? mdRef.current : hostRef.current),
+  })
 
   useEffect(() => subscribeColorScheme(() => { setDark(isDarkScheme()) }), [])
 
@@ -110,7 +91,7 @@ export function TextEditor(props: FileViewerProps) {
     setDraft(null)
     setDirty(false)
     setSaveState('idle')
-    hidePopup()
+    selectionPopup.hide()
   }, [content])
 
   // Create the CodeMirror editor once the content is loaded. The view owns
@@ -159,33 +140,33 @@ export function TextEditor(props: FileViewerProps) {
         ...(viewerId === 'code' || viewerId === 'markdown' ? [
           CodeMirrorView.updateListener.of((update) => {
             if (update.geometryChanged || update.viewportChanged) {
-              hidePopup()
+              selectionPopup.hide()
               return
             }
             if (!update.view.hasFocus) {
-              hidePopup()
+              selectionPopup.hide()
               return
             }
             if (!(update.selectionSet || update.docChanged || update.focusChanged)) return
             const sel = update.state.selection.main
             if (sel.empty) {
-              hidePopup()
+              selectionPopup.hide()
               return
             }
             const text = update.state.sliceDoc(sel.from, sel.to)
             if (text.trim() === '') {
-              hidePopup()
+              selectionPopup.hide()
               return
             }
             // Page coordinates (the document root may scroll); the popup is
             // position:fixed, so convert to viewport coordinates.
             const rect = update.view.coordsAtPos(sel.head)
             if (rect === null) {
-              hidePopup()
+              selectionPopup.hide()
               return
             }
             const doc = update.state.doc
-            showPopup(
+            selectionPopup.show(
               buildSelectionInsert(path, scope.cwd, {
                 start: doc.lineAt(sel.from).number,
                 end: doc.lineAt(sel.to).number,
@@ -222,7 +203,7 @@ export function TextEditor(props: FileViewerProps) {
   // it becomes visible again (CodeMirror sizes itself on reveal). A mode
   // flip also invalidates any anchored selection popup.
   useEffect(() => {
-    hidePopup()
+    selectionPopup.hide()
     if (mode === 'edit') viewRef.current?.requestMeasure()
   }, [mode])
 
@@ -242,8 +223,6 @@ export function TextEditor(props: FileViewerProps) {
     })
   }
 
-  const markdown = viewerId === 'markdown'
-  const html = viewerId === 'html'
   /** The markdown source the preview renders (draft wins over saved content). */
   const mdText = draft ?? content ?? ''
   /** The preview source: `mdText` with local image destinations rewritten to
@@ -295,22 +274,22 @@ export function TextEditor(props: FileViewerProps) {
   const handlePreviewMouseUp = (): void => {
     const sel = window.getSelection()
     if (sel === null || sel.isCollapsed || sel.anchorNode === null || sel.focusNode === null) {
-      hidePopup()
+      selectionPopup.hide()
       return
     }
     const host = mdRef.current
     if (host === null || !host.contains(sel.anchorNode) || !host.contains(sel.focusNode)) {
-      hidePopup()
+      selectionPopup.hide()
       return
     }
     const text = sel.toString()
     if (text.trim() === '') {
-      hidePopup()
+      selectionPopup.hide()
       return
     }
     const rect = sel.getRangeAt(0).getBoundingClientRect()
     const lines = linesOfSelection(mdText, text)
-    showPopup(
+    selectionPopup.show(
       buildSelectionInsert(path, scope.cwd, lines ?? undefined, text),
       rect.left + rect.width / 2,
       rect.top,
@@ -401,7 +380,7 @@ export function TextEditor(props: FileViewerProps) {
           className={css.editorMd}
           ref={mdRef}
           onMouseUp={handlePreviewMouseUp}
-          onScroll={hidePopup}
+          onScroll={selectionPopup.hide}
         >
           {/* The fence copy-button labels must come from this plugin's own
               dictionary: the DSH MarkdownText/CodeBlock are cordis-free and
@@ -449,15 +428,16 @@ export function TextEditor(props: FileViewerProps) {
           />
         </>
       )}
-      {popup !== null && createPortal(
+      {selectionPopup.popup !== null && createPortal(
         <button
           type="button"
+          ref={selectionPopup.buttonRef}
           className={css.selectionPopup}
-          style={{ left: popup.left, top: popup.top }}
+          style={{ left: selectionPopup.popup.left, top: selectionPopup.popup.top }}
           // Keep the selection (and CodeMirror focus) alive until the click
           // commits — without this the popup unmounts before click lands.
           onMouseDown={(event) => { event.preventDefault() }}
-          onClick={commitPopup}
+          onClick={selectionPopup.commit}
         >
           {t('addToConversation')}
         </button>,
