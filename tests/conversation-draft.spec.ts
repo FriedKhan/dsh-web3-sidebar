@@ -3,11 +3,19 @@
  * issue #425 ②). `insertAtCaret` is pure string math (splice with
  * whitespace-aware joins); `probeComposerCaret` reads the live composer
  * `<textarea>` selection out of the DOM, guarded by a value-sync check so a
- * stale or wrong-composer caret is never applied.
+ * stale or wrong-composer caret is never applied; `placeComposerCaretAfterInsert`
+ * restores the caret right after the inserted text once the setDraft value
+ * commit lands, keeping stacked inserts at their running position.
  */
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it } from 'vitest'
-import { insertAtCaret, probeComposerCaret } from '../src/client/conversation-draft.ts'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { Context } from '../src/context-types.ts'
+import {
+  appendToDraft,
+  insertAtCaret,
+  placeComposerCaretAfterInsert,
+  probeComposerCaret,
+} from '../src/client/conversation-draft.ts'
 
 /**
  * Mount a fake composer textarea inside the DSH conversation column
@@ -31,6 +39,9 @@ function mountComposer(draft: string, selectionStart: number, selectionEnd: numb
 afterEach(() => {
   document.body.innerHTML = ''
 })
+
+/** Let the scheduled caret placement (rAF or setTimeout fallback) settle. */
+const tick = (): Promise<void> => new Promise((resolve) => { setTimeout(resolve, 30) })
 
 describe('probeComposerCaret', () => {
   it('returns the textarea selection when the DOM is in sync with the draft', () => {
@@ -118,5 +129,112 @@ describe('insertAtCaret', () => {
 
   it('handles an empty draft with a resolved caret', () => {
     expect(insertAtCaret('', 'CODE', { start: 0, end: 0 })).toBe('CODE')
+  })
+})
+
+describe('placeComposerCaretAfterInsert', () => {
+  it('places the caret right after the inserted text once the value commits', async () => {
+    const input = mountComposer('AB', 1, 1) // pre-insert draft still shown
+    placeComposerCaretAfterInsert('A C B', 1 + 1)
+    input.value = 'A C B' // the setDraft commit lands
+    await tick()
+    expect(input.selectionStart).toBe(2)
+    expect(input.selectionEnd).toBe(2)
+  })
+
+  it('places the caret when the value already matches (no commit needed)', async () => {
+    const input = mountComposer('A C B', 0, 0)
+    placeComposerCaretAfterInsert('A C B', 2)
+    await tick()
+    expect(input.selectionStart).toBe(2)
+  })
+
+  it('clamps an out-of-range caret into the composer bounds', async () => {
+    const input = mountComposer('A C B', 0, 0)
+    placeComposerCaretAfterInsert('A C B', 99)
+    await tick()
+    expect(input.selectionStart).toBe(5)
+  })
+
+  it('does not clobber a composer that never matches the expected draft', async () => {
+    const input = mountComposer('OLD', 0, 0)
+    input.value = 'UNRELATED' // a competing update wins the race
+    input.setSelectionRange(1, 1)
+    placeComposerCaretAfterInsert('NEW DRAFT', 2)
+    await tick()
+    expect(input.selectionStart).toBe(1)
+  })
+
+  it('leaves the caret alone when no composer is mounted', async () => {
+    placeComposerCaretAfterInsert('X', 0)
+    await tick() // must not throw
+    expect(document.querySelector('textarea')).toBeNull()
+  })
+})
+
+describe('appendToDraft', () => {
+  /** A fake ctx exposing the conversation service face appendToDraft uses. */
+  function fakeCtx(
+    getDraft: () => string,
+    onSet: (next: string) => void,
+    withConversation = true,
+  ): Context {
+    const input = {
+      state: { getSnapshot: (): { draft: string } => ({ draft: getDraft() }) },
+      setDraft: (next: string): void => { onSet(next) },
+    }
+    return {
+      sessions: { scope: (): unknown => ({}) },
+      get: (name: string): unknown =>
+        withConversation && name === 'conversation'
+          ? { input: { for: (): unknown => input } }
+          : undefined,
+    } as unknown as Context
+  }
+
+  it('splices at the probed caret and restores the caret right after the insert', async () => {
+    const composer = mountComposer('AB', 1, 1)
+    const calls: string[] = []
+    const ctx = fakeCtx(() => 'AB', (next) => { calls.push(next); composer.value = next })
+    expect(appendToDraft(ctx, 's1', 'C')).toBe(true)
+    expect(calls).toEqual(['A C B'])
+    await tick()
+    // 'A C| B' — the caret sits right after the inserted text (the left
+    // separating space shifts it past `start + text.length`).
+    expect(composer.selectionStart).toBe(3)
+    expect(composer.selectionEnd).toBe(3)
+  })
+
+  it('appends and places the caret at the end when the caret is unknown', async () => {
+    const composer = mountComposer('hi', 0, 0)
+    composer.value = 'hi changed' // out of sync → caret unresolved → append
+    const calls: string[] = []
+    const ctx = fakeCtx(() => 'hi', (next) => { calls.push(next); composer.value = next })
+    appendToDraft(ctx, 's1', 'X')
+    expect(calls).toEqual(['hi X'])
+    await tick()
+    expect(composer.selectionStart).toBe(4)
+  })
+
+  it('keeps stacked inserts at the running caret (A|B + C + D → ACD|B)', async () => {
+    const composer = mountComposer('AB', 1, 1)
+    let draft = 'AB'
+    const ctx = fakeCtx(() => draft, (next) => { draft = next; composer.value = next })
+    appendToDraft(ctx, 's1', 'C')
+    await tick()
+    expect(draft).toBe('A C B')
+    expect(composer.selectionStart).toBe(3) // A C| B
+    appendToDraft(ctx, 's1', 'D')
+    await tick()
+    expect(draft).toBe('A C D B')
+    expect(composer.selectionStart).toBe(5) // A C D| B
+  })
+
+  it('returns false and logs when the conversation service is unavailable', () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const ctx = fakeCtx(() => '', (): void => undefined, false)
+    expect(appendToDraft(ctx, 's1', 'X')).toBe(false)
+    expect(consoleWarn).toHaveBeenCalledTimes(1)
+    consoleWarn.mockRestore()
   })
 })
