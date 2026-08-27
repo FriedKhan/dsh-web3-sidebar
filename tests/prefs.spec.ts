@@ -306,8 +306,8 @@ describe('side card preferences', () => {
     }
     try {
       const store = createSidebarStore()
-      // The narrow viewport keeps a fresh session collapsed for the FIRST
-      // seeding only (a later user expansion persists).
+      // The narrow viewport keeps a fresh session collapsed. Persisted
+      // sessions follow the same load-time visibility rule in state.spec.ts.
       store.setSession('narrow-fresh')
       expect(store.getSnapshot().state?.panelOpen).toBe(false)
       // The width seeding still follows the window (clamped to the floor).
