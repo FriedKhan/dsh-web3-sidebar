@@ -48,7 +48,18 @@
      hidden box stays a PROGRAMMATICALLY scrollable container, and a
      scrollIntoView fired from panel content (the file tree's "Show in
      folder" reveal) scrolled the host itself — shifting the whole panel,
-     tab bar included, out of the viewport with no way to scroll back. */
+     tab bar included, out of the viewport with no way to scroll back.
+     The same class covers any scroll-into-view fixup — focus moving into
+     an off-viewport region, a nested iframe/workbench claiming focus
+     while it loads — so the guard belongs on the layer itself, not per
+     call site. The `hidden` declaration BEFORE `clip` is an old-engine
+     fallback, not dead style: engines without `clip` support (Safari < 16)
+     drop the `clip` line, which would leave this box `overflow: visible`
+     — no clipping at all, and the page-draggable regression above
+     returns. With `hidden` first those engines keep the clipping (plus
+     its pre-clip scrollability) while every clip-aware engine applies
+     the later `clip`. */
+  overflow: hidden;
   overflow: clip;
 }
 
