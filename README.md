@@ -241,10 +241,11 @@ GitHub topic [`dsh-better-sidebar`](https://github.com/topics/dsh-better-sidebar
 ### 🧰 增强与工具
 
 <details>
-<summary><b>2 个插件（点击展开）</b></summary>
+<summary><b>3 个插件（点击展开）</b></summary>
 
 | 插件 | ⭐ | 简介 |
 |---|---|---|
+| [eg-bole/dsh-better-sidebar-icons](https://github.com/eg-bole/dsh-better-sidebar-icons) | <img alt="stars" src="https://img.shields.io/github/stars/eg-bole/dsh-better-sidebar-icons?style=flat&color=4d6bfe" /> | VSCode 风格文件 / 文件夹图标主题：文件树与编辑器 Tab 换上熟悉的开发环境图标（vscode-icons 移植，纯 DOM 覆盖零侵入，安装 / 卸载零残留） |
 | [dong-victor/dsh-better-sidebar-terminal-plus](https://github.com/dong-victor/dsh-better-sidebar-terminal-plus) | <img alt="stars" src="https://img.shields.io/github/stars/dong-victor/dsh-better-sidebar-terminal-plus?style=flat&color=4d6bfe" /> | 终端增强：内嵌 Nerd Font 图标字体、修复 xterm 图标渲染、稳定终端 cwd |
 | [Max-Null/dsh-sidebar-preview-select](https://github.com/Max-Null/dsh-sidebar-preview-select) | <img alt="stars" src="https://img.shields.io/github/stars/Max-Null/dsh-sidebar-preview-select?style=flat&color=4d6bfe" /> | 预览划选增强：侧边栏预览里划选文本 → 浮动「发送到会话」 |
 
