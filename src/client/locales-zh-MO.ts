@@ -379,6 +379,7 @@ export const zhMO: Record<string, string> = {
   pluginMdExportDesc: '在 better-sidebar 的 Markdown 工具列上新增「匯出」按鈕：一鍵把目前 .md 渲染為獨立 HTML（表格/程式碼區塊/Mermaid 圖表內嵌，版面跟隨預覽主題）直接儲存到同目錄，或透過列印對話框匯出為 PDF',
   pluginCodeNavDesc: '程式碼預覽導覽：按檔案類型自動識別語言並高亮語法，符號大綱（類別/方法/變數篩選 + 一鍵跳轉），檔案內搜尋（全部符合高亮、上/下一處、區分大小寫），接管 better-sidebar 的程式碼檔案預覽',
   pluginSuhuangScrollDesc: '把本機蘇黃共閱 Runtime 接入 DSH 設定與 better-sidebar，支援模型設定、連線測試及連續閱卷控制；使用前須安裝 Suhuang Scroll Runtime 與 dsh-better-sidebar',
+  pluginBetterOverleafDesc: 'better-sidebar 的 Overleaf 分頁：直連 CDP 瀏覽器登入（支援第三方 Chromium），專案列表/切換，<workspace>/overleaf/ 本地 git 映像，git 雙向同步（API 唯讀兜底），檔案預覽走側邊欄工作台',
   pluginGitRemotesDesc: 'better-sidebar Git 遠端 Tab：看分支/上游/ahead-behind，fetch（可 prune）、ff-only pull、確認後才 push。不替換內建 Git 的暫存/提交，也不提供 force-push 或模型自動推送',
   pluginSentinelDesc: '條件驅動的 agent 喚醒系統：檔案/程序/連接埠/HTTP/命令/webhook 感測器，條件達成自動喚醒休眠工作階段；註冊「哨兵」Tab 展示伺服器全域監控表',
   pluginServerDeckDesc: '伺服器卡片儀表板：每台伺服器一張卡片，展示在線狀態、OS、運行時長、CPU/內存/磁盤用量與延遲；點卡片進入 xterm.js 交互終端，支持 ~/.ssh/config 一鍵導入（自動跳過 Git 託管別名）；安裝 better-sidebar 後註冊原生「服務器」Tab，未安裝時保留獨立抽屜',
