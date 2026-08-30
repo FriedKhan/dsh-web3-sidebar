@@ -1,14 +1,14 @@
 /**
- * The 8 built-in tab descriptors: the plugin registers its own pages
- * (editor / git / subagent / sidechat / terminal / browser / diff /
- * file-trace) through
+ * The 7 built-in tab descriptors: the plugin registers its own pages
+ * (editor / git — the unified changes tab / subagent / sidechat / terminal /
+ * browser / diff) through
  * the same {@link BetterSidebarService} external plugins use — eating its
  * own dogfood. The terminal descriptor owns its quota (`TERMINAL_LIMIT`)
  * and mints `terminal:<uuid>` ids through `createTab`; the browser mints
  * `browser:<n>` the same way (no quota). The editor IS the files window
  * (the old standalone explorer merged into it).
  */
-import { IconBranchOutline16, IconCodeOutline16, IconFolderOpen16, IconNewChatOutline16, IconPanelLeftOutline16, IconThinkOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconCodeOutline16, IconFolderOpen16, IconNewChatOutline16, IconPanelLeftOutline16, IconThinkOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { Context } from '../../context-types.ts'
 import { allLeaves, isAgentTabId, type SidebarState } from '../state.ts'
 import { t } from '../locales.ts'
@@ -16,15 +16,14 @@ import { openSidebarFile } from '../intercept.tsx'
 import { EditorHost } from '../EditorHost.tsx'
 import { OpenWithSettings } from '../open-with-settings.tsx'
 import { lazyChunkComponent } from '../lazy-chunk.tsx'
-import { GitView } from '../GitView.tsx'
+import { ChangesTab } from '../changes/ChangesTab.tsx'
+import { extractFileOps } from '../changes/ops.ts'
 import { DiffTab } from '../DiffTab.tsx'
 import { SubagentView } from '../SubagentView.tsx'
 import { consumeSidechatSeed, SideChatView, sidechatThreadIdOf } from '../SideChatView.tsx'
 import { api } from '../api.ts'
 import { BrowserView } from '../BrowserView.tsx'
-import { IconTerminalOutline16, IconDiffOutline16, IconGlobeOutline16, IconHistoryOutline16 } from '../icons.tsx'
-import { FileTraceTab } from '../filetrace/FileTraceTab.tsx'
-import { extractFileOps } from '../filetrace/ops.ts'
+import { IconTerminalOutline16, IconDiffOutline16, IconGlobeOutline16 } from '../icons.tsx'
 import { TERMINAL_FONT_SIZE_MAX, TERMINAL_FONT_SIZE_MIN } from '../../prefs-shared.ts'
 import type { ComponentType } from 'react'
 import type { SessionScope } from '../api.ts'
@@ -142,18 +141,30 @@ export function builtinTabs(ctx: Context, options: BuiltinTabOptions = {}): read
       ),
     },
     {
+      // The unified changes tab (id kept as 'git' so persisted layouts keep
+      // resolving): the Git lens is the former source-control panel; the
+      // session lens is the former file-trace tab (PR #471). Both preview
+      // through one shared diff stack, and the badge counts this session's
+      // file ops (live from the event log — the git status itself needs a
+      // fetch, so it stays out of the badge).
       id: 'git',
-      title: () => t('git'),
-      icon: (size: number) => <IconBranchOutline16 size={size} />,
+      title: () => t('changes'),
+      icon: (size: number) => <IconDiffOutline16 size={size} />,
       order: 20,
       single: true,
-      component: ({ ctx, store, scope, visible, onOpenDiff }) => (
-        <GitView
-          scope={scope}
+      badge: (ctx, scope) => {
+        const events = ctx.sessions.get(scope.sessionId)?.events
+        return events === undefined ? null : extractFileOps(events).length
+      },
+      component: ({ ctx, store, scope, tab, visible, onOpenFile, onOpenDiff }) => (
+        <ChangesTab
+          ctx={ctx}
           store={store}
+          scope={scope}
+          tab={tab}
           visible={visible}
           onOpenFile={(path) => { openSidebarFile(ctx, store, scope.sessionId, path) }}
-          onOpenDiff={onOpenDiff ?? (() => { /* no-op */ })}
+          onOpenDiff={onOpenDiff}
         />
       ),
     },
@@ -339,20 +350,8 @@ export function builtinTabs(ctx: Context, options: BuiltinTabOptions = {}): read
       component: (props) => <BrowserView {...props} />,
     },
     {
-      id: 'file-trace',
-      title: () => t('fileTrace'),
-      icon: (size: number) => <IconHistoryOutline16 size={size} />,
-      order: 55,
-      single: true,
-      badge: (ctx, scope) => {
-        const events = ctx.sessions.get(scope.sessionId)?.events
-        return events === undefined ? null : extractFileOps(events).length
-      },
-      component: (props) => <FileTraceTab {...props} />,
-    },
-    {
       id: 'diff',
-      title: () => t('git'),
+      title: () => t('changes'),
       icon: (size: number) => <IconDiffOutline16 size={size} />,
       order: -1,
       hidden: true,

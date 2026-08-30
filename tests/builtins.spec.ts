@@ -1,10 +1,11 @@
 /**
- * Built-in registration tests: the plugin registers 8 tabs and 6 file
+ * Built-in registration tests: the plugin registers 7 tabs and 6 file
  * viewers through the same service external plugins use (dogfooding);
  * the catch-all `code` viewer, the NUL-sniffing `binary-download` viewer,
  * and the html sandbox settings pin the registry's behavior. (Office
  * previews are NOT built in — they moved to the recommended office plugin,
- * see src/client/plugins-viewers.ts.)
+ * see src/client/plugins-viewers.ts.) The git tab is the unified changes
+ * tab (git lens + session lens, PR #471's file-trace merged in).
  */
 import { describe, expect, it } from 'vitest'
 // First import: browser globals before the xterm-carrying builtin graph loads.
@@ -27,20 +28,20 @@ function setup(options: BuiltinTabOptions = {}): { service: ReturnType<typeof cr
 }
 
 describe('built-in tab registrations', () => {
-  it('registers the 8 built-in tabs', () => {
+  it('registers the 7 built-in tabs', () => {
     const { service } = setup()
     expect(service.getTabs().map(t => t.id).sort()).toEqual(
-      ['browser', 'diff', 'editor', 'file-trace', 'git', 'sidechat', 'subagent', 'terminal'],
+      ['browser', 'diff', 'editor', 'git', 'sidechat', 'subagent', 'terminal'],
     )
   })
 
-  it('the file-trace tab is a single-instance badge-carrying visible tab', () => {
+  it('the git (changes) tab is a single-instance badge-carrying visible tab', () => {
     const { service } = setup()
-    const trace = service.getTab('file-trace')
-    expect(trace?.single).toBe(true)
-    expect(trace?.hidden).not.toBe(true)
-    expect(trace?.badge).toBeDefined()
-    expect(trace?.component).toBeDefined()
+    const changes = service.getTab('git')
+    expect(changes?.single).toBe(true)
+    expect(changes?.hidden).not.toBe(true)
+    expect(changes?.badge).toBeDefined()
+    expect(changes?.component).toBeDefined()
   })
 
   it('only diff is hidden from the + menu; editor is the visible files window (order 10)', () => {

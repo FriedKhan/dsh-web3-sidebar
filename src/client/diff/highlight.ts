@@ -1,11 +1,12 @@
 /**
- * Lightweight syntax highlighting for the file-trace panel: extension-based
- * language detection plus a single-pass line tokenizer that colors comments,
- * strings, numbers, keywords, types, functions, and preprocessor directives
- * for common languages (C/C++, Java, C#, JS/TS, Python, Go, Rust, shell, batch,
- * PowerShell, and config formats). Pure functions only — no React, no DOM.
- * Multi-line block-comment state threads across lines via scanLine's
- * inBlock parameter, so interior lines of a block comment color correctly.
+ * Lightweight syntax highlighting for the shared diff renderer: extension-
+ * based language detection plus a single-pass line tokenizer that colors
+ * comments, strings, numbers, keywords, types, functions, and preprocessor
+ * directives for common languages (C/C++, Java, C#, JS/TS, Python, Go, Rust,
+ * shell, batch, PowerShell, and config formats). Pure functions only — no
+ * React, no DOM. Multi-line block-comment state threads across lines via
+ * scanLine's inBlock parameter, so interior lines of a block comment color
+ * correctly.
  */
 
 /** Token classes mapped 1:1 to panel CSS color classes. */

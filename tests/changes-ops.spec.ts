@@ -1,12 +1,12 @@
 /**
- * File-trace tab data layer: event-log folding into file operations, plus a
- * sanity pass over the ported diff/highlight engines (their full behavior
- * suites live in the standalone dsh-file-trace plugin).
+ * Changes tab session-lens data layer: event-log folding into file
+ * operations, plus a sanity pass over the shared diff/highlight engines
+ * (their full behavior suites live in the standalone dsh-file-trace plugin).
  */
 import { describe, expect, it } from 'vitest'
-import { extractFileOps, groupByFile, knownContentBefore, parseReadLines } from '../src/client/filetrace/ops.ts'
-import { diffLines, buildDiffSegments, coalesceInline, diffInline } from '../src/client/filetrace/diff.ts'
-import { langOfPath, scanLine } from '../src/client/filetrace/highlight.ts'
+import { extractFileOps, groupByFile, knownContentBefore, parseReadLines } from '../src/client/changes/ops.ts'
+import { diffLines, buildDiffSegments, coalesceInline, diffInline } from '../src/client/diff/rows.ts'
+import { langOfPath, scanLine } from '../src/client/diff/highlight.ts'
 import type { SidebarSessionEvent } from '../src/context-types.ts'
 
 /** One synthetic session event. */

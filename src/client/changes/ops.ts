@@ -1,10 +1,10 @@
 /**
- * File-operation extraction for the file-trace tab: folds the session's
- * append-only event log (`tool/call` + `tool/result` pairs) into one op per
- * file-touching call — the same semantics as the standalone dsh-file-trace
- * plugin's Chat-view extraction, reading the authoritative event log instead
- * (the repo's stated preference for cross-feature session data). Pure — no
- * React, no DOM.
+ * File-operation extraction for the changes tab's session lens: folds the
+ * session's append-only event log (`tool/call` + `tool/result` pairs) into
+ * one op per file-touching call — the same semantics as the standalone
+ * dsh-file-trace plugin's Chat-view extraction, reading the authoritative
+ * event log instead (the repo's stated preference for cross-feature session
+ * data). Pure — no React, no DOM.
  */
 import type { SidebarSessionEvent } from '../../context-types.ts'
 
