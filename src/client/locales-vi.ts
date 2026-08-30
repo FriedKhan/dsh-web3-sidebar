@@ -17,6 +17,16 @@
 /** The vi dictionary (key-set-equal to zh, enforced by the type annotation in locales.ts). */
 export const vi: Record<string, string> = {
   files: 'Tệp',
+  fileTrace: 'Theo dõi tệp',
+  fileTraceEmpty: 'Chưa có thao tác tệp nào trong phiên này',
+  fileTraceRead: 'Đọc',
+  fileTraceWrite: 'Ghi',
+  fileTraceEdit: 'Chỉnh sửa',
+  fileTraceRunning: 'đang chạy',
+  fileTraceError: 'lỗi',
+  fileTraceFold: '{count} dòng… bấm để mở rộng',
+  fileTraceContext: 'ngữ cảnh',
+  fileTracePriorUnknown: 'Nội dung trước thay đổi nằm ngoài cửa sổ; hiển thị như toàn bộ mới thêm',
   explorer: 'Trình khám phá',
   git: 'Quản lý mã nguồn',
   terminal: 'Terminal',

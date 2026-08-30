@@ -32,6 +32,16 @@
 /** The zh-HK dictionary (key-set-equal to zh, enforced by the type annotation in locales.ts). */
 export const zhMO: Record<string, string> = {
   files: '檔案',
+  fileTrace: '檔案追蹤',
+  fileTraceEmpty: '本工作階段還沒有檔案操作',
+  fileTraceRead: '讀取',
+  fileTraceWrite: '寫入',
+  fileTraceEdit: '編輯',
+  fileTraceRunning: '執行中',
+  fileTraceError: '出錯',
+  fileTraceFold: '{count} 行…點擊展開',
+  fileTraceContext: '上下文',
+  fileTracePriorUnknown: '變更前的內容不在視窗內，顯示為全部新增',
   explorer: '檔案總管',
   git: '原始碼管理',
   terminal: '終端',

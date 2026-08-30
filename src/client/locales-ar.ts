@@ -18,6 +18,16 @@
 /** The ar dictionary (key-set-equal to zh, enforced by the type annotation in locales.ts). */
 export const ar: Record<string, string> = {
   files: 'الملفات',
+  fileTrace: 'تتبع الملفات',
+  fileTraceEmpty: 'لا توجد عمليات ملفات في هذه الجلسة بعد',
+  fileTraceRead: 'قراءة',
+  fileTraceWrite: 'كتابة',
+  fileTraceEdit: 'تحرير',
+  fileTraceRunning: 'قيد التنفيذ',
+  fileTraceError: 'خطأ',
+  fileTraceFold: '{count} أسطر… انقر للتوسيع',
+  fileTraceContext: 'سياق',
+  fileTracePriorUnknown: 'المحتوى السابق خارج النافذة؛ يُعرض كما لو أُضيف بالكامل',
   explorer: 'المستكشف',
   git: 'إدارة المصدر',
   terminal: 'الطرفية',

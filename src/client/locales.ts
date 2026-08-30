@@ -24,6 +24,16 @@
 /** The zh dictionary (also registered into the DSH locale registry under {@link LOCALE_NS}). */
 export const zh = {
   files: '文件',
+  fileTrace: '文件追踪',
+  fileTraceEmpty: '本会话还没有文件操作',
+  fileTraceRead: '读取',
+  fileTraceWrite: '写入',
+  fileTraceEdit: '编辑',
+  fileTraceRunning: '执行中',
+  fileTraceError: '出错',
+  fileTraceFold: '{count} 行…点击展开',
+  fileTraceContext: '上下文',
+  fileTracePriorUnknown: '变更前的内容不在窗口内，显示为全新增',
   explorer: '资源管理器',
   git: '源代码管理',
   terminal: '终端',
@@ -392,6 +402,16 @@ export const zh = {
 /** The en dictionary (key-set-equal to zh, enforced by the type annotation). */
 export const en: Record<keyof typeof zh, string> = {
   files: 'Files',
+  fileTrace: 'File trace',
+  fileTraceEmpty: 'No file operations in this session yet',
+  fileTraceRead: 'Read',
+  fileTraceWrite: 'Write',
+  fileTraceEdit: 'Edit',
+  fileTraceRunning: 'running',
+  fileTraceError: 'error',
+  fileTraceFold: '{count} lines…click to expand',
+  fileTraceContext: 'context',
+  fileTracePriorUnknown: 'Prior content is outside the loaded window; shown as all-added',
   explorer: 'Explorer',
   git: 'Source Control',
   terminal: 'Terminal',

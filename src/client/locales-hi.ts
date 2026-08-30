@@ -17,6 +17,16 @@
 /** The hi dictionary (key-set-equal to zh, enforced by the type annotation in locales.ts). */
 export const hi: Record<string, string> = {
   files: 'फ़ाइलें',
+  fileTrace: 'फ़ाइल ट्रेस',
+  fileTraceEmpty: 'इस सत्र में अभी कोई फ़ाइल ऑपरेशन नहीं',
+  fileTraceRead: 'पढ़ना',
+  fileTraceWrite: 'लिखना',
+  fileTraceEdit: 'संपादन',
+  fileTraceRunning: 'चल रहा है',
+  fileTraceError: 'त्रुटि',
+  fileTraceFold: '{count} पंक्तियाँ… विस्तार के लिए क्लिक करें',
+  fileTraceContext: 'संदर्भ',
+  fileTracePriorUnknown: 'बदलाव से पहले की सामग्री विंडो में नहीं है; पूरी नई जोड़ी गई दिखाई जाती है',
   explorer: 'एक्सप्लोरर',
   git: 'सोर्स कंट्रोल',
   terminal: 'टर्मिनल',

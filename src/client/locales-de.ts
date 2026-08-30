@@ -3,6 +3,16 @@
  */
 export const de: Record<string, string> = {
   files: 'Dateien',
+  fileTrace: 'Dateiverfolgung',
+  fileTraceEmpty: 'Noch keine Dateioperationen in dieser Sitzung',
+  fileTraceRead: 'Lesen',
+  fileTraceWrite: 'Schreiben',
+  fileTraceEdit: 'Bearbeiten',
+  fileTraceRunning: 'läuft',
+  fileTraceError: 'Fehler',
+  fileTraceFold: '{count} Zeilen… zum Aufklappen klicken',
+  fileTraceContext: 'Kontext',
+  fileTracePriorUnknown: 'Inhalt vor der Änderung liegt außerhalb des Fensters; als vollständig neu angezeigt',
   explorer: 'Explorer',
   git: 'Quellcodeverwaltung',
   terminal: 'Terminal',

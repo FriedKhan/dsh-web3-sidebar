@@ -19,6 +19,16 @@
 /** The pl dictionary (key-set-equal to zh, enforced by the type annotation in locales.ts). */
 export const pl: Record<string, string> = {
   files: 'Pliki',
+  fileTrace: 'Śledzenie plików',
+  fileTraceEmpty: 'Brak operacji na plikach w tej sesji',
+  fileTraceRead: 'Odczyt',
+  fileTraceWrite: 'Zapis',
+  fileTraceEdit: 'Edycja',
+  fileTraceRunning: 'w toku',
+  fileTraceError: 'błąd',
+  fileTraceFold: '{count} wierszy… kliknij, aby rozwinąć',
+  fileTraceContext: 'kontekst',
+  fileTracePriorUnknown: 'Zawartość sprzed zmiany jest poza oknem; pokazana jako w całości nowa',
   explorer: 'Eksplorator',
   git: 'Kontrola źródła',
   terminal: 'Terminal',

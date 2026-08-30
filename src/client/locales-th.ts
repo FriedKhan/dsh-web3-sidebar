@@ -17,6 +17,16 @@
 /** The th dictionary (key-set-equal to zh, enforced by the type annotation in locales.ts). */
 export const th: Record<string, string> = {
   files: 'ไฟล์',
+  fileTrace: 'ติดตามไฟล์',
+  fileTraceEmpty: 'ยังไม่มีการดำเนินการไฟล์ในเซสชันนี้',
+  fileTraceRead: 'อ่าน',
+  fileTraceWrite: 'เขียน',
+  fileTraceEdit: 'แก้ไข',
+  fileTraceRunning: 'กำลังทำงาน',
+  fileTraceError: 'ข้อผิดพลาด',
+  fileTraceFold: '{count} บรรทัด… คลิกเพื่อขยาย',
+  fileTraceContext: 'บริบท',
+  fileTracePriorUnknown: 'เนื้อหาก่อนแก้ไขอยู่นอกหน้าต่าง แสดงเป็นเพิ่มใหม่ทั้งหมด',
   explorer: 'ตัวสำรวจ',
   git: 'การควบคุมซอร์ส',
   terminal: 'เทอร์มินัล',

@@ -1,6 +1,7 @@
 /**
- * The 7 built-in tab descriptors: the plugin registers its own pages
- * (editor / git / subagent / sidechat / terminal / browser / diff) through
+ * The 8 built-in tab descriptors: the plugin registers its own pages
+ * (editor / git / subagent / sidechat / terminal / browser / diff /
+ * file-trace) through
  * the same {@link BetterSidebarService} external plugins use — eating its
  * own dogfood. The terminal descriptor owns its quota (`TERMINAL_LIMIT`)
  * and mints `terminal:<uuid>` ids through `createTab`; the browser mints
@@ -21,7 +22,9 @@ import { SubagentView } from '../SubagentView.tsx'
 import { consumeSidechatSeed, SideChatView, sidechatThreadIdOf } from '../SideChatView.tsx'
 import { api } from '../api.ts'
 import { BrowserView } from '../BrowserView.tsx'
-import { IconTerminalOutline16, IconDiffOutline16, IconGlobeOutline16 } from '../icons.tsx'
+import { IconTerminalOutline16, IconDiffOutline16, IconGlobeOutline16, IconHistoryOutline16 } from '../icons.tsx'
+import { FileTraceTab } from '../filetrace/FileTraceTab.tsx'
+import { extractFileOps } from '../filetrace/ops.ts'
 import { TERMINAL_FONT_SIZE_MAX, TERMINAL_FONT_SIZE_MIN } from '../../prefs-shared.ts'
 import type { ComponentType } from 'react'
 import type { SessionScope } from '../api.ts'
@@ -334,6 +337,18 @@ export function builtinTabs(ctx: Context, options: BuiltinTabOptions = {}): read
         patch: { nextBrowser: state.nextBrowser + 1 },
       }),
       component: (props) => <BrowserView {...props} />,
+    },
+    {
+      id: 'file-trace',
+      title: () => t('fileTrace'),
+      icon: (size: number) => <IconHistoryOutline16 size={size} />,
+      order: 55,
+      single: true,
+      badge: (ctx, scope) => {
+        const events = ctx.sessions.get(scope.sessionId)?.events
+        return events === undefined ? null : extractFileOps(events).length
+      },
+      component: (props) => <FileTraceTab {...props} />,
     },
     {
       id: 'diff',

@@ -1,5 +1,5 @@
 /**
- * Built-in registration tests: the plugin registers 7 tabs and 6 file
+ * Built-in registration tests: the plugin registers 8 tabs and 6 file
  * viewers through the same service external plugins use (dogfooding);
  * the catch-all `code` viewer, the NUL-sniffing `binary-download` viewer,
  * and the html sandbox settings pin the registry's behavior. (Office
@@ -27,11 +27,20 @@ function setup(options: BuiltinTabOptions = {}): { service: ReturnType<typeof cr
 }
 
 describe('built-in tab registrations', () => {
-  it('registers the 7 built-in tabs', () => {
+  it('registers the 8 built-in tabs', () => {
     const { service } = setup()
     expect(service.getTabs().map(t => t.id).sort()).toEqual(
-      ['browser', 'diff', 'editor', 'git', 'sidechat', 'subagent', 'terminal'],
+      ['browser', 'diff', 'editor', 'file-trace', 'git', 'sidechat', 'subagent', 'terminal'],
     )
+  })
+
+  it('the file-trace tab is a single-instance badge-carrying visible tab', () => {
+    const { service } = setup()
+    const trace = service.getTab('file-trace')
+    expect(trace?.single).toBe(true)
+    expect(trace?.hidden).not.toBe(true)
+    expect(trace?.badge).toBeDefined()
+    expect(trace?.component).toBeDefined()
   })
 
   it('only diff is hidden from the + menu; editor is the visible files window (order 10)', () => {

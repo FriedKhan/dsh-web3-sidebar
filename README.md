@@ -55,7 +55,7 @@
 - **⚡ 按需加载**：启动只拉 ~325KB 核心，终端 / 编辑器 / Mermaid 图表等重依赖用到才按需拉取（[设计文档](docs/plans/2026-08-12-lazy-chunks-design.md)）
 - **🌏 多语言**：界面文案跟随 DSH 语言（zh / en）实时切换；安装 `@huanlin/dsh-plugin-better-locale` 后支持日语（ja）等第三语言覆盖（见下方「🌏 第三语言覆盖」）
 
-> 🔌 **核心理念**：服务优先——内置的 7 tab + 6 viewer 与第三方插件通过同一套 `ctx.betterSidebar` API 注册，能力完全对等；官方不再内置、可由生态提供的功能，交由生态插件实现（已有 **28+ 生态插件**，见下方「🌐 插件生态」）。接入文档见「🔌 服务化扩展」与 [外部插件接入指南](./docs/external-plugin-guide.md)。
+> 🔌 **核心理念**：服务优先——内置的 8 tab + 6 viewer 与第三方插件通过同一套 `ctx.betterSidebar` API 注册，能力完全对等；官方不再内置、可由生态提供的功能，交由生态插件实现（已有 **28+ 生态插件**，见下方「🌐 插件生态」）。接入文档见「🔌 服务化扩展」与 [外部插件接入指南](./docs/external-plugin-guide.md)。
 
 ## 🚀 安装
 
@@ -163,11 +163,12 @@ dsh registry enable dsh-external/dsh-better-sidebar
 | **💻 真实终端**<br/><sub>xterm.js + node-pty 真实 shell（不是模拟器）：断线重连 transcript 回放、shell / shellArgs 可配置（设置页或 `cordis.patch.yml`）、可选为模型注入 `terminal_*` 工具（agent 可直接开终端跑命令）。</sub><br/><div align="center"><img width="420" alt="真实终端" src="https://github.com/user-attachments/assets/0dad6ad3-ff3f-4b5a-86d2-f832ce65323e" /></div> | **🌿 Git 面板**<br/><sub>暂存 / 取消暂存 / 提交（`Ctrl+Enter`）/ 还原，历史列表；点击改动文件打开 **VSCode 式 diff tab**（红绿行级对比）。</sub><br/><div align="center"><img width="420" alt="Git 面板" src="https://github.com/user-attachments/assets/e7fc1220-305f-4bca-8583-e77ab4f4fa78" /></div> |
 | **🌐 内嵌浏览器**<br/><sub>多开网页 tab：后退 / 前进 / 刷新 / 地址栏；内容运行在**不透明源沙箱 iframe**（界面实时显示沙箱状态，可按页面临时解锁）；聊天里的外链点击可被接管到侧边栏打开（按协议分流，可配）。</sub><br/><div align="center"><img width="420" alt="内嵌浏览器" src="https://github.com/user-attachments/assets/9bc6b65a-64fc-4942-a685-76e391e55606" /></div> | **🧩 任务页：子代理拓扑 + 后台任务**<br/><sub>子代理树实时拓扑（运行状态、批量实时预览）+ 后台任务清单（退出码 / 实时输出 / 强制终止）；新子代理 / 新任务可自动展开侧边栏（可关）。</sub><br/><div align="center"><img width="420" alt="任务页：子代理拓扑" src="https://github.com/user-attachments/assets/dcd8ed2f-59fa-405b-937b-2d250f5034dd" /></div> |
 | **💬 侧边对话(beta)**<br/><sub>Codex 风格侧边线程：**每个对话一个独立 Tab**；线程继承主会话完整上下文（含进行中回合，以 interrupted 诚实冻结）独立运行，不污染主会话；可持续追问、重启冷恢复；一键「保存为新会话」提升为顶层会话。</sub><br/><div align="center"><img width="420" alt="侧边对话(beta)" src="https://github.com/user-attachments/assets/3a338c36-f5de-4000-95f3-4b1cd04f60fc" /></div> | **🪟 双工作台：右侧栏 + 底部面板 + 分栏**<br/><sub>右侧栏与底部面板可同时展开；拖 Tab 到分栏边缘**拆分**、拖到中间**合并**（可跨面板）；面板宽高左缘/上缘拖拽调节；移动端自动合并为全宽抽屉；把 tab 拖到主会话区域可变为**自由窗口**（悬浮 / 缩放 / 置顶，拖回 pane 停靠）。</sub><br/><div align="center"><img width="420" alt="双工作台（右侧栏 + 底部面板）" src="https://github.com/user-attachments/assets/dfdb875e-a1a8-4d4b-8340-353736b1708f" /></div> |
+| **📜 文件追踪**<br/><sub>记录模型在本会话读 / 写 / 编辑过的每一个文件（读取会话事件日志实时折叠），按文件分组、带操作数角标；点开任意操作查看**行级 diff**（删红 / 增绿 / 改蓝 + 行内字符级高亮）或带真实行号的读取视图，常见语言**语法着色**（关键字 / 字符串 / 数字 / 类型 / 函数 / 注释 / 预处理，跨行块注释正确），失败操作直接展示真实错误文本，长行与未变更区间可折叠。移植自独立插件 [dsh-file-trace](https://github.com/lhh010/dsh-file-trace)（仍独立维护，二者可共存；本内置 tab 可在设置页整体关闭）。</sub> |
 | **⚙️ 声明式设置**<br/><sub>设置页「侧边卡片」分区：每个 tab / 预览器一张小卡片，独立开关（高亮启用态 + 品牌开关滑块）；二级设置经卡片底部「功能设置」条弹窗（开关 / 文本 / 数字 / 下拉）；插件自有设置持久化在 `pluginSettings`。</sub><br/><div align="center"><img width="420" alt="声明式设置：侧边卡片" src="https://github.com/user-attachments/assets/0800ca64-621e-48da-b7df-aecfddc3ec29" /></div> | **📱 移动端**<br/><sub>窄屏（<768px）自动切换为全宽抽屉：底栏 tab 一次性并入右侧栏，触屏拖拽可调。</sub><br/><div align="center"><img width="360" alt="移动端全宽抽屉" src="https://github.com/user-attachments/assets/a82ba78a-f4cf-4d85-80e8-050a05beb144" /></div> |
 
 ## 🌐 插件生态
 
-`ctx.betterSidebar` 服务向所有插件开放两个扩展点：**`registerTab`（注册侧边栏页面）** 与 **`registerFileViewer`（注册文件预览器）**。内置的 7 tab + 6 viewer 与第三方插件走同一套 API，能力完全对等。
+`ctx.betterSidebar` 服务向所有插件开放两个扩展点：**`registerTab`（注册侧边栏页面）** 与 **`registerFileViewer`（注册文件预览器）**。内置的 8 tab + 6 viewer 与第三方插件走同一套 API，能力完全对等。
 
 ```ts
 import type {} from 'dsh-better-sidebar'  // 触发 ctx.betterSidebar 类型合并
@@ -449,7 +450,7 @@ GitHub topic [`dsh-better-sidebar`](https://github.com/topics/dsh-better-sidebar
 
 ## 🔌 服务化扩展
 
-从 v0.4.0 起暴露 `ctx.betterSidebar` 服务，其他插件可注册侧边栏页面与文件预览器（内置 7 tab + 6 viewer 亦通过同一服务注册）。v0.12.1 补齐基座能力（完整类型导出、能力探测、状态订阅、tab 角标、生命周期回调、定向打开、插件自有设置等）。
+从 v0.4.0 起暴露 `ctx.betterSidebar` 服务，其他插件可注册侧边栏页面与文件预览器（内置 8 tab + 6 viewer 亦通过同一服务注册）。v0.12.1 补齐基座能力（完整类型导出、能力探测、状态订阅、tab 角标、生命周期回调、定向打开、插件自有设置等）。
 
 完整接入文档（全字段、匹配算法、HMR 陷阱、声明式设置、版本探测、自由窗口与皮肤契约）：**[`docs/external-plugin-guide.md`](./docs/external-plugin-guide.md)**；仓库开发规则（硬约束 / CI / 发版）见 [`AGENTS.md`](./AGENTS.md)。
 

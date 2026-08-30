@@ -13,6 +13,16 @@
 
 export const ru: Record<string, string> = {
   files: 'Файлы',
+  fileTrace: 'Отслеживание файлов',
+  fileTraceEmpty: 'В этой сессии пока нет файловых операций',
+  fileTraceRead: 'Чтение',
+  fileTraceWrite: 'Запись',
+  fileTraceEdit: 'Изменение',
+  fileTraceRunning: 'выполняется',
+  fileTraceError: 'ошибка',
+  fileTraceFold: '{count} строк… нажмите, чтобы развернуть',
+  fileTraceContext: 'контекст',
+  fileTracePriorUnknown: 'Содержимое до изменения вне окна; показано как полностью добавленное',
   explorer: 'Проводник',
   git: 'Контроль версий',
   terminal: 'Терминал',

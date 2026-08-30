@@ -10,6 +10,16 @@
 /** fr dictionary for the `betterSidebar` namespace. */
 export const fr: Record<string, string> = {
   files: 'Fichiers',
+  fileTrace: 'Suivi des fichiers',
+  fileTraceEmpty: 'Aucune opération de fichier dans cette session',
+  fileTraceRead: 'Lecture',
+  fileTraceWrite: 'Écriture',
+  fileTraceEdit: 'Modification',
+  fileTraceRunning: 'en cours',
+  fileTraceError: 'erreur',
+  fileTraceFold: '{count} lignes… cliquer pour déplier',
+  fileTraceContext: 'contexte',
+  fileTracePriorUnknown: 'Le contenu antérieur est hors de la fenêtre ; affiché comme entièrement ajouté',
   explorer: 'Explorateur',
   git: 'Gestion de code source',
   terminal: 'Terminal',

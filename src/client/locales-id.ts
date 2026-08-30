@@ -15,6 +15,16 @@
 
 export const id: Record<string, string> = {
   files: 'Berkas',
+  fileTrace: 'Pelacakan file',
+  fileTraceEmpty: 'Belum ada operasi file di sesi ini',
+  fileTraceRead: 'Baca',
+  fileTraceWrite: 'Tulis',
+  fileTraceEdit: 'Edit',
+  fileTraceRunning: 'berjalan',
+  fileTraceError: 'error',
+  fileTraceFold: '{count} baris… klik untuk meluaskan',
+  fileTraceContext: 'konteks',
+  fileTracePriorUnknown: 'Konten sebelum perubahan berada di luar jendela; ditampilkan sebagai sepenuhnya baru',
   explorer: 'Explorer',
   git: 'Source Control',
   terminal: 'Terminal',

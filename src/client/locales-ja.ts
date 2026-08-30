@@ -17,6 +17,16 @@
 /** The ja dictionary (key-set-equal to zh, enforced by the type annotation in locales.ts). */
 export const ja: Record<string, string> = {
   files: 'ファイル',
+  fileTrace: 'ファイル追跡',
+  fileTraceEmpty: 'このセッションにはファイル操作がまだありません',
+  fileTraceRead: '読み取り',
+  fileTraceWrite: '書き込み',
+  fileTraceEdit: '編集',
+  fileTraceRunning: '実行中',
+  fileTraceError: 'エラー',
+  fileTraceFold: '{count} 行…クリックで展開',
+  fileTraceContext: 'コンテキスト',
+  fileTracePriorUnknown: '変更前の内容がウィンドウ内になく、すべて新規追加として表示されます',
   explorer: 'エクスプローラー',
   git: 'ソース管理',
   terminal: 'ターミナル',

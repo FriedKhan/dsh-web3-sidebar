@@ -17,6 +17,16 @@
 /** The tr dictionary (key-set-equal to zh, enforced by the type annotation in locales.ts). */
 export const tr: Record<string, string> = {
   files: 'Dosyalar',
+  fileTrace: 'Dosya izleme',
+  fileTraceEmpty: 'Bu oturumda henüz dosya işlemi yok',
+  fileTraceRead: 'Okuma',
+  fileTraceWrite: 'Yazma',
+  fileTraceEdit: 'Düzenleme',
+  fileTraceRunning: 'çalışıyor',
+  fileTraceError: 'hata',
+  fileTraceFold: '{count} satır… genişletmek için tıklayın',
+  fileTraceContext: 'bağlam',
+  fileTracePriorUnknown: 'Değişiklik öncesi içerik pencere dışında; tamamen yeni eklenmiş olarak gösteriliyor',
   explorer: 'Gezgin',
   git: 'Kaynak denetimi',
   terminal: 'Terminal',

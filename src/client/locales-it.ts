@@ -8,6 +8,16 @@
 
 export const it: Record<string, string> = {
   files: 'File',
+  fileTrace: 'Tracciatura file',
+  fileTraceEmpty: 'Ancora nessuna operazione sui file in questa sessione',
+  fileTraceRead: 'Lettura',
+  fileTraceWrite: 'Scrittura',
+  fileTraceEdit: 'Modifica',
+  fileTraceRunning: 'in esecuzione',
+  fileTraceError: 'errore',
+  fileTraceFold: '{count} righe… clicca per espandere',
+  fileTraceContext: 'contesto',
+  fileTracePriorUnknown: 'Il contenuto precedente è fuori dalla finestra; mostrato come interamente aggiunto',
   explorer: 'Esplora risorse',
   git: 'Controllo del codice sorgente',
   terminal: 'Terminale',

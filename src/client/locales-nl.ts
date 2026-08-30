@@ -15,6 +15,16 @@
  */
 export const nl: Record<string, string> = {
   files: 'Bestanden',
+  fileTrace: 'Bestandsspoor',
+  fileTraceEmpty: 'Nog geen bestandsbewerkingen in deze sessie',
+  fileTraceRead: 'Lezen',
+  fileTraceWrite: 'Schrijven',
+  fileTraceEdit: 'Bewerken',
+  fileTraceRunning: 'actief',
+  fileTraceError: 'fout',
+  fileTraceFold: '{count} regels… klik om uit te klappen',
+  fileTraceContext: 'context',
+  fileTracePriorUnknown: 'Eerdere inhoud valt buiten het venster; getoond als volledig nieuw',
   explorer: 'Verkenner',
   git: 'Bronbeheer',
   terminal: 'Terminal',

@@ -3,7 +3,7 @@
 > 面向 **消费插件开发者**：如何让你的插件向 better-sidebar 注册新的侧边栏页面（tab）和文件类型预览器。
 >
 > 适用版本：**v0.4.0+**（`ctx.betterSidebar` 服务）；声明式设置 **v0.4.1+**；text/number 设置行 **v0.11.0+**；badge/生命周期/定向打开/插件设置/版本探测 **v0.12.0+**；select 设置行（`settingSelect`）与外链认领（`urlTarget`）**v0.13.0+**；统一 `@deepseek-ai/cordis` 类型基底 **v0.15.2+**；自由窗口（`floatWindows`）**v0.16.0+**；终端固定（pin）**v0.17.0+**。当前版本 v0.17.1。
-> 权威代码：`src/client/service.ts`（服务实现）、`src/client/builtins/`（内置 7 tab + 6 viewer 参考实现）、`lib/types/client/service.d.ts`（类型声明）。
+> 权威代码：`src/client/service.ts`（服务实现）、`src/client/builtins/`（内置 8 tab + 6 viewer 参考实现）、`lib/types/client/service.d.ts`（类型声明）。
 > 仓库开发规则（硬约束 / CI / 发版）见 [AGENTS.md](../AGENTS.md)。
 
 ---
@@ -15,7 +15,7 @@ better-sidebar 从 v0.4.0 起把自己改造成一个**注册表服务**：
 - **新页面（tab）**：注册一种新的侧边栏 tab 类型，出现在侧边栏 `+` 菜单里，用户点击后在自己的分栏里打开你的 React 页面；
 - **文件预览器（file viewer）**：注册一种文件类型预览器，让用户在侧边栏打开文件时走你的渲染组件（覆盖或补充内置的 image/pdf/code 等）。
 
-内置的 7 个 tab（editor / git / subagent / sidechat / terminal / browser / diff）和 6 个 viewer（image / pdf / markdown / html / code / binary-download）**自己也是通过同一套 API 注册的**（吃自己的狗粮），所以外部插件的能力与内置功能完全对等。
+内置的 8 个 tab（editor / git / subagent / sidechat / terminal / browser / file-trace / diff）和 6 个 viewer（image / pdf / markdown / html / code / binary-download）**自己也是通过同一套 API 注册的**（吃自己的狗粮），所以外部插件的能力与内置功能完全对等。
 
 关键机制一句话：better-sidebar 的 client half 在 `apply()` 开头执行 `ctx.provide('betterSidebar', service)`（`src/client/index.tsx`），消费插件在 `inject` 里声明 `'betterSidebar'`，Cordis 保证服务就绪后才激活你的插件，然后你调用 `ctx.betterSidebar.registerTab(...)` / `registerFileViewer(...)` 完成注册，返回的 disposer 由 Cordis fiber 在卸载（HMR / 禁用）时自动调用。
 
@@ -157,7 +157,7 @@ interface TabDescriptor {
   title: string | (() => string)
   /** 图标：ReactNode 或 (size: number) => ReactNode */
   icon?: ReactNode | ((size: number) => ReactNode)
-  /** + 菜单排序（升序）；默认 100。内置：editor=10, git=20, subagent=30, sidechat=35, terminal=40, browser=50 */
+  /** + 菜单排序（升序）；默认 100。内置：editor=10, git=20, subagent=30, sidechat=35, terminal=40, browser=50, file-trace=55=50 */
   order?: number
   /** 从 + 菜单隐藏（editor/diff 用：由其他流程触发打开，不在菜单里） */
   hidden?: boolean

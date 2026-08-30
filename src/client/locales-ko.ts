@@ -9,6 +9,16 @@
 
 export const ko: Record<string, string> = {
   files: '파일',
+  fileTrace: '파일 추적',
+  fileTraceEmpty: '이 세션에 아직 파일 작업이 없습니다',
+  fileTraceRead: '읽기',
+  fileTraceWrite: '쓰기',
+  fileTraceEdit: '편집',
+  fileTraceRunning: '실행 중',
+  fileTraceError: '오류',
+  fileTraceFold: '{count}줄… 클릭하여 펼치기',
+  fileTraceContext: '컨텍스트',
+  fileTracePriorUnknown: '변경 전 내용이 창에 없어 모두 새로 추가된 것으로 표시됩니다',
   explorer: '탐색기',
   git: '소스 제어',
   terminal: '터미널',
