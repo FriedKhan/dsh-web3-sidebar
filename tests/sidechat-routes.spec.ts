@@ -8,6 +8,7 @@
  * afterSeq deltas, tail cap, live/persisted sources).
  */
 import { describe, expect, it, vi } from 'vitest'
+import { SUBAGENT_DESCRIPTOR_VERSION } from '@deepseek-ai/dsh-subagent'
 import { buildSidechatApi } from '../src/sidechat-routes.ts'
 import { SidebarError } from '../src/wire.ts'
 import { SIDE_BOUNDARY_PROMPT, SIDE_INJECTION_PLUGIN, SIDE_NEW_THREAD_TITLE, sideLabel } from '../src/sidechat-core.ts'
@@ -134,7 +135,10 @@ describe('sidechat.start', () => {
       'subagent/descriptor',
     ])
     expect(options.seed.at(-1)?.data).toMatchObject({
-      version: 2,
+      // The descriptor version is stamped by the host package's
+      // snapshotSubagentDescriptor — follow it instead of pinning a literal
+      // (bumped 2 → 3 in DSH 0.1.2-alpha.2).
+      version: SUBAGENT_DESCRIPTOR_VERSION,
       mode: 'continuable',
       provider: 'sidechat',
       label: sideLabel('explain the event flow'),

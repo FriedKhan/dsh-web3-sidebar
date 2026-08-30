@@ -19,19 +19,26 @@
 
 「npm 打包 → 真实挂载 → 无头渲染」门禁（证明打包产物在真实 DSH 挂载后不 crash）：`pnpm build && pnpm pack` 产 tarball → `scripts/e2e-mount.sh` 装进全新 scratch profile（`dsh plugin --profile web add file:<tarball>`）并启动真实 `dsh web`（keyless，`--port 0`）→ `tests/e2e/mount.e2e.ts`（Playwright）断言 `[data-dsh-better-sidebar]` 挂载、无错误条/pageerror/console 错误，经「+ 菜单」逐个打开内置 tab（含终端懒加载 chunk），再经文件树打开 seed 文件强制加载 editor chunk（`client-editor.js`）。
 
-本地：`pnpm build && pnpm pack && pnpm exec playwright install chromium && pnpm test:mount`。CI 钉 `@deepseek-ai/dsh@0.1.1-rc.2`（peer 下限 `^0.1.0-rc.8`，双向兼容）。e2e spec 命名 `*.e2e.ts` + vitest `exclude` 双保险；**改 `exclude` 必须保留默认排除项**（exclude 整体替换默认值）。
+本地：`pnpm build && pnpm pack && pnpm exec playwright install chromium && pnpm test:mount`。CI 钉 `@deepseek-ai/dsh@0.1.2-alpha.2`（`alpha` dist-tag；peer 下限 `^0.1.0-rc.8`，双向兼容）。e2e spec 命名 `*.e2e.ts` + vitest `exclude` 双保险；**改 `exclude` 必须保留默认排除项**（exclude 整体替换默认值）。
 
 ---
 
-## 3. DSH 0.1.2-alpha.1 适配要点（双协议 e2e）
+## 3. DSH 0.1.2-alpha.x 适配要点（双协议 e2e）
 
-tag `dsh-v0.1.2-alpha.1`，**尚未发布 npm**（CI 钉版暂不动）。破坏性变更：
+tag `dsh-v0.1.2-alpha.1`，尚未发布 npm；**0.1.2-alpha.2 已发布 npm（`alpha` dist-tag），CI 钉版与 devDependencies 基线随之升级**（devDeps 里的死包 `@deepseek-ai/dsh-client-runtime` 已移除）。alpha.1 的破坏性变更（alpha.2 上经真机挂载冒烟 14/14 复验仍成立）：
 
 1. **一次性 token 鉴权**：就绪行变为 `dsh web: http://127.0.0.1:<port>/?token=<43字符>`（导航换签名 cookie，干净 URL 401）。`e2e-mount.sh` 的 URL grep 必须延伸到空白（`[^ ]*`，在 `/` 截断丢 token）；e2e 统一走 `tests/e2e/host.ts`：`PAGE_URL`/`pageUrl({...})` goto（合并 query 与 token），`createHostApi()` 先 token 换 `Set-Cookie`（`redirect: 'manual'`）。token 换 cookie 的 303 会**丢弃同 URL 其它 query 参数**——带 stamps 导航走 `host.ts` 的 `gotoPage()`（先 addCookies 再直达）。插件 `/sidebar/*` 路由不受影响，同源 fetch 照旧。
 2. **Remote gateway 取代 ApiProxy**：点分 `POST /api/workspace.create`（裸参数）→ 斜杠 `POST /api/workspace/create`，payload 恰为 `{args: {...}}`，**args 按控制器 TS 参数名包装**（`workspace/create`、`session/create` → `{args:{request:{...}}}`；`session/list` 参数名 `_request` **不可省略**——`{}` 也被拒 `args fields do not match the descriptor`）；envelope `method` 与路径一致，点分 404。`hostRpc(api, 'workspace.create', args)` 点分优先、404 回退斜杠并缓存；`SLASH_ARGS_KEY` 由 `tests/e2e-host-protocol.spec.ts` 锁定。
 3. **`@deepseek-ai/dsh-client-runtime` 已移除**（继任 seed 是裸名 `@deepseek-ai/dsh-client-store`，无 `/client` 子路径）。插件源码零引用（externals 白名单解析失败被 `buildExternalsRequire` 宽容跳过，见 `src/client/chunk-loader.ts` 头注释），已从 peerDependencies 移除；`dsh.client.inject` 保留该条目无害。
 4. **`MarkdownText` labels 契约（真机验证的破坏）**：labels prop 从扁平可选 `codeLabels` 改为**必填嵌套** `labels: { code: { copyLabel, copiedLabel }, footnotes }`——只传旧 prop 时 fence 渲染抛 `Cannot read properties of undefined (reading 'code')`。四个渲染点（mermaid.tsx / MarkdownHtml.tsx / TextEditor.tsx / SideChatView.tsx）统一走 `src/client/markdown-labels.tsx` 的 `markdownTextProps()`（双形状 + 双 prop 名两版通吃；漏传回退硬编码中文）。
 5. **侧边对话转录走自有路由，不碰客户端宿主 RPC**：`ctx.connection.api`（含 `sessions.history`）在 alpha.1 整体移除，继任 `session/follow|page` 又对 `origin:'subagent'` 会话强制 subagent 地址（普通 `{kind:'session'}` 被 `agent-busy` 拒）且分页 `throughSeq` 不得超当前游标（纯 page 拿不到尾页）。转录因此由 **`sidechat.events`** 插件路由供给（`src/sidechat-routes.ts`：live 读 `agent.session.events`、冷读 `sessionPersistence.inspect`（两版同形，alpha.1 的 inspect 返回展开后逻辑日志），服务端 `session/end-seed` 切割 + `afterSeq` 增量）；`ctx.connection` 镜像与 inject 已删。设计见 [docs/plans/2026-08-20-sidechat-tab-design.md](docs/plans/2026-08-20-sidechat-tab-design.md) §10。
+
+alpha.2 相对 alpha.1 的增量（均已适配）：
+
+6. **`dsh-settings` 删除运行时导出 `settingsNamespace`**：命名空间合法性校验转为编译期模板字面量 `SettingsNamespaceInput`（小写字母开头 + `[a-z0-9-]` 尾部），`'dsh-better-sidebar'` 字面量直接过——宿主侧直接传常量（`src/index.ts` 的 settings inject），不再调运行时助手。
+7. **`dsh-subagent` 的 `SUBAGENT_DESCRIPTOR_VERSION` 2 → 3**：sidechat 种子的 `subagent/descriptor` 版本由宿主包盖章，插件不硬编码；测试断言跟随常量（`tests/sidechat-routes.spec.ts`），勿钉字面量。
+8. **其余核实为无破坏**：`SessionEvent.ignorable` 恢复（插件无引用）；Remote 网关统一 `RemoteError` 封装不改变 e2e 消费的 envelope 形状；token URL / 斜杠 RPC / `MarkdownText` labels 契约与 alpha.1 一致。
+9. **e2e scratch profile 的 `minimumReleaseAgeExclude` 增加 `'@deepseek-ai/*'`**（`scripts/e2e-mount.sh` / `e2e-aggregate-mount.sh`，与仓库根 `pnpm-workspace.yaml` 同策）：alpha 版本常在发布后 24h 内跑 lane，pnpm 11 的 `minimumReleaseAge` 默认会拒装新鲜包。
 
 ---
 
