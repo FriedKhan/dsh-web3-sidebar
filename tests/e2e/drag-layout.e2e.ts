@@ -612,35 +612,28 @@ test('bottom panel never flashes full-width after a width drag release (issue #2
   }
 })
 
-test('the bottom-push anchor resolves through the composite selectors (at least one; same element when both)', async ({ page }) => {
-  // layout.css pushes the bottom panel via the center column. The selector
-  // is COMPOSITE on purpose: `[data-pane="conversation"]` (0.1.x naming)
-  // and `:has(> [data-slot="conversation"])` (rc.8-era naming) — HOST
-  // VERSIONS MAY RENAME THE ATTRIBUTE (issue #208 comment / PR #226), so
-  // the contract is "at least one resolves", and when both resolve they
-  // must hit the SAME element (otherwise the push would land twice).
+test('the bottom-push anchor resolves through the shell-written center-column tag', async ({ page }) => {
+  // layout.css pushes the bottom panel via the center column, anchored on
+  // the [data-dsh-center-col] tag the Sidebar shell's locator writes onto
+  // the measured column node (Sidebar.tsx locate — the slot wrapper
+  // [data-slot="conversation"]'s parent). The tag must sit on exactly ONE
+  // node: a stale tag on a swapped-out node (boot swap / HMR) would leave
+  // the push rule anchorless or doubled.
   await page.goto(PAGE_URL, { waitUntil: 'domcontentloaded' })
   await expect(page.locator('[data-dsh-better-sidebar]')).toBeAttached({ timeout: 90_000 })
+  await expect
+    .poll(async () => page.evaluate(() => document.querySelectorAll('#root [data-dsh-center-col]').length), { timeout: 90_000 })
+    .toBe(1)
   const anchors = await page.evaluate(() => {
-    const a = document.querySelector('#root [data-dsh-frame] > [data-pane="conversation"]')
-    const b = document.querySelector('#root :has(> [data-slot="conversation"])')
-    const frame = document.querySelector('#root [data-dsh-frame]')
+    const tagged = document.querySelector('#root [data-dsh-center-col]')
+    const slotParent = document.querySelector('#root [data-slot="conversation"]')?.parentElement ?? null
     return {
-      a: a !== null,
-      b: b !== null,
-      same: a !== null && b !== null && a === b,
-      frameChildren: frame !== null
-        ? [...frame.children].map(el => `${el.tagName}[${[...el.attributes].map(attr => attr.name).filter(name => name.startsWith('data-')).join(',')}]`)
-        : [],
+      tagged: tagged !== null,
+      same: tagged !== null && slotParent !== null && tagged === slotParent,
     }
   })
-  expect(
-    anchors.a || anchors.b,
-    `at least one bottom-push anchor must resolve on this host (frame children: ${anchors.frameChildren.join(' / ') || 'no [data-dsh-frame]'})`,
-  ).toBe(true)
-  if (anchors.a && anchors.b) {
-    expect(anchors.same, 'both selectors must hit the SAME center-column element').toBe(true)
-  }
+  expect(anchors.tagged, 'the tagged center column must resolve').toBe(true)
+  expect(anchors.same, 'the tag must sit on the conversation slot wrapper\'s parent (the measured column)').toBe(true)
 })
 
 /* ── bottom-strip drag with the right panel CLOSED must not touch the host

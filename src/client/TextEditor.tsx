@@ -114,11 +114,13 @@ export function TextEditor(props: FileViewerProps) {
   }, [content])
 
   // Create the CodeMirror editor once the content is loaded. The view owns
-  // the document; React only tracks dirty/draft state through the update
-  // listener. For markdown the view stays mounted while previewing (hidden),
-  // so unsaved edits survive the preview/edit toggle. The theme + syntax
-  // colors live in a compartment so a scheme flip reconfigures only that
-  // part — the document, undo history and scroll position survive.
+  // the document; React only tracks dirty state through the update listener
+  // (the draft — the preview's text — is snapshotted from the live view on
+  // entering preview, not re-stringified per keystroke). For markdown the
+  // view stays mounted while previewing (hidden), so unsaved edits survive
+  // the preview/edit toggle. The theme + syntax colors live in a compartment
+  // so a scheme flip reconfigures only that part — the document, undo
+  // history and scroll position survive.
   useEffect(() => {
     if (content === undefined) return
     const host = hostRef.current
@@ -139,7 +141,6 @@ export function TextEditor(props: FileViewerProps) {
         ...(language !== null ? [language] : []),
         CodeMirrorView.updateListener.of((update) => {
           if (update.docChanged) {
-            setDraft(update.state.doc.toString())
             setDirty(true)
           }
         }),
@@ -225,6 +226,17 @@ export function TextEditor(props: FileViewerProps) {
     hidePopup()
     if (mode === 'edit') viewRef.current?.requestMeasure()
   }, [mode])
+
+  // Snapshot the live document into the draft whenever the preview needs
+  // it: entering preview (the markdown preview renders `draft ?? content`)
+  // and a content swap (the view was just re-created above, so the read is
+  // the new document — matching the reset-to-null of a clean tab). The
+  // updateListener used to re-stringify the WHOLE document on every
+  // keystroke (O(docLength) per key) for a draft only preview reads.
+  useEffect(() => {
+    const view = viewRef.current
+    setDraft(view === null ? null : view.state.doc.toString())
+  }, [mode, content])
 
   const save = (): void => {
     const view = viewRef.current

@@ -756,6 +756,7 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore }) {
         ?.parentElement as HTMLElement | undefined
       if (col === undefined || !col.isConnected) {
         if (centerColRef.current !== null) {
+          centerColRef.current.removeAttribute('data-dsh-center-col')
           centerColRef.current = null
           observer?.disconnect()
           observer = undefined
@@ -768,8 +769,13 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore }) {
         // measure it once. Same-node size changes are the ResizeObserver's
         // job — no forced measurement here, because a forced
         // getBoundingClientRect per mutation would reflow the shell at
-        // mutation cadence.
+        // mutation cadence. The tag retargets with the ref: layout.css's
+        // bottom-push rule anchors on [data-dsh-center-col], so exactly the
+        // measured node carries it (a stale tag on a swapped-out node would
+        // leave the push rule anchorless or doubled).
+        centerColRef.current?.removeAttribute('data-dsh-center-col')
         centerColRef.current = col
+        col.setAttribute('data-dsh-center-col', '')
         observer?.disconnect()
         observer = new ResizeObserver(measureCenter)
         observer.observe(col)
@@ -822,6 +828,7 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore }) {
       observer?.disconnect()
       watcher.disconnect()
       htmlStyleWatcher.disconnect()
+      centerColRef.current?.removeAttribute('data-dsh-center-col')
       centerColRef.current = null
     }
     // Opening the bottom panel re-runs the whole locate/measure chain: a
