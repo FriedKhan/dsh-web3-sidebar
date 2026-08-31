@@ -149,12 +149,15 @@ test('measure: mount latency, longtasks and bundle cost through a full tab sweep
   const resources = await page.evaluate(() =>
     performance.getEntriesByType('resource')
       .filter(entry => /sidebar/.test(entry.name))
-      .map(entry => ({
-        name: entry.name.replace(/^https?:\/\/[^/]+/, ''),
-        transferSize: entry.transferSize,
-        decodedBodySize: entry.decodedBodySize,
-        duration: entry.duration,
-      })) as ResourceStat[],
+      .map(entry => {
+        const resource = entry as PerformanceResourceTiming
+        return {
+          name: entry.name.replace(/^https?:\/\/[^/]+/, ''),
+          transferSize: resource.transferSize,
+          decodedBodySize: resource.decodedBodySize,
+          duration: entry.duration,
+        }
+      }) as ResourceStat[],
   )
 
   const longtasks = probe.longtasks ?? []
