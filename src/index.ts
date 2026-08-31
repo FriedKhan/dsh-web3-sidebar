@@ -18,7 +18,7 @@ import { basename, dirname, extname, isAbsolute, join } from 'node:path'
 import type { IncomingMessage } from 'node:http'
 import type { Duplex } from 'node:stream'
 import { WebSocket, WebSocketServer } from 'ws'
-import type { Context, SidebarHttpRequest } from './context-types.ts'
+import type { Context, SidebarHttpRequest, SidebarSessionEvent } from './context-types.ts'
 import {
   Config,
   PrefsSchema,
@@ -454,6 +454,44 @@ function buildApi(
       const path = await resolveGitPath(cwd, requireString(payload, 'path'), repoRoot)
       const rev = requireString(payload, 'rev')
       return { content: await git.show(cwd, rev, path, repoRoot) }
+    },
+    // The session's file-tool events for the changes tab's session lens
+    // (and its badge): the CLIENT runtime's sessions face has no event-log
+    // access, so the events cross the wire here — live session log first,
+    // the persisted logical log for not-yet-hydrated sessions. Only the
+    // two event types the lens folds are sent, narrowed to `seq > afterSeq`
+    // so polling is a small delta, with the same recent-window cap the
+    // client accumulator applies.
+    'changes.ops': async (payload) => {
+      const sessionId = requireString(payload, 'sessionId')
+      const rawAfter = (payload as { afterSeq?: unknown } | null)?.afterSeq
+      if (rawAfter !== undefined
+        && (typeof rawAfter !== 'number' || !Number.isSafeInteger(rawAfter) || rawAfter < 0)) {
+        throw new SidebarError('bad-request', 'afterSeq must be a non-negative integer')
+      }
+      // An absent cursor means "from the very first event" — a session whose
+      // log opens on a tool event (subagent seeds do) carries seq 0, which a
+      // literal `> 0` comparison would drop, so the absent case floors at -1.
+      const afterSeq = rawAfter ?? -1
+      let events: readonly SidebarSessionEvent[] | undefined = ctx.sessions.get(sessionId)?.events
+      if (events === undefined) {
+        const persistence = ctx.get('sessionPersistence')
+        if (persistence !== undefined) {
+          try {
+            events = (await persistence.inspect(sessionId)).events
+          } catch {
+            // Cold read unavailable (session never persisted): an empty
+            // window is the honest answer, not a wire error.
+          }
+        }
+      }
+      if (events === undefined) return { events: [], lastSeq: Math.max(afterSeq, 0) }
+      const CHANGES_EVENTS_CAP = 4000
+      const filtered = events.filter(
+        event => (event.type === 'tool/call' || event.type === 'tool/result') && event.seq > afterSeq,
+      )
+      const window = filtered.length > CHANGES_EVENTS_CAP ? filtered.slice(filtered.length - CHANGES_EVENTS_CAP) : filtered
+      return { events: window, lastSeq: window.at(-1)?.seq ?? afterSeq }
     },
     // Release a terminal immediately. The WebSocket close frame already does
     // this while the socket is open; this route covers the tab-close that
