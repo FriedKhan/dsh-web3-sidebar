@@ -21,7 +21,7 @@ import { registerOpenPathInterception, registerTurnTailInterception } from './in
 import { registerLinkInterception } from './link-intercept.ts'
 import { registerImeGuard } from './ime-guard.ts'
 import { registerSettingsNavIcon } from './settings-nav-icon.ts'
-import { loadExternalDisable, loadPrefs } from './prefs.ts'
+import { loadBootDecision } from './prefs.ts'
 import { SideCardSection } from './SideCardSection.tsx'
 import { api } from './api.ts'
 import { LOCALE_NS, attachLocale, attachBetterLocale, t, zh, en,
@@ -275,24 +275,26 @@ export function apply(ctx: Context): void {
       }
       const sync = async (): Promise<void> => {
         if (disposed) return
-        // Resolve the user's side card prefs BEFORE the first session seeds,
-        // so a brand-new conversation opens (or stays closed) at the chosen
-        // width from first paint. A settings route failure falls back to the
-        // schema defaults; the sidebar still mounts (a stalled wire gives up
-        // after the timeout and mounts on the defaults).
-        const prefs = await Promise.race([
-          loadPrefs(api),
+        // Resolve the user's side card prefs and the external-disable flag
+        // from ONE settings fetch BEFORE the first session seeds, so a
+        // brand-new conversation opens (or stays closed) at the chosen width
+        // from first paint. A settings route failure falls back to the schema
+        // defaults; the sidebar still mounts (a stalled wire gives up after
+        // the timeout and mounts on the defaults — the external-disable check
+        // rides the same fetch, so one round trip covers both decisions).
+        const decision = await Promise.race([
+          loadBootDecision(api),
           new Promise<null>(resolve => { const timer = window.setTimeout(() => resolve(null), 2000) }),
         ])
-        if (prefs !== null) sidebarStore.setPrefs(prefs)
         if (disposed) return
-        // Mutual exclusion with the dsh-web-ui family right panel: while the
-        // aionui-panel provider is selected, the sidebar must not mount at
-        // all. Re-evaluated on every settings-document update (live switch).
-        const suspended = await loadExternalDisable(api)
-        if (disposed) return
-        sidebarStore.setSuspended(suspended)
-        if (suspended) unmount()
+        if (decision !== null) {
+          sidebarStore.setPrefs(decision.prefs)
+          // Mutual exclusion with the dsh-web-ui family right panel: while the
+          // aionui-panel provider is selected, the sidebar must not mount at
+          // all. Re-evaluated on every settings-document update (live switch).
+          sidebarStore.setSuspended(decision.suspended)
+        }
+        if (decision?.suspended) unmount()
         else mount()
       }
       void sync()
