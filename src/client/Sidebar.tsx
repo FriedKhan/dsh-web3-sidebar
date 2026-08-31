@@ -407,6 +407,20 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore }) {
   }, [sessionId, summaryCwd])
   const cwd = summaryCwd ?? fetchedCwd
 
+  // The + menu options ride a memo so the two Workbenches share ONE array
+  // identity across renders that did not change the store (drag state,
+  // viewport resize): fresh arrays per render re-rendered every LeafView's
+  // + affordance whether or not anything tab-related moved.
+  const newTabOptions = useMemo(
+    () => (state === undefined || sessionId === undefined ? [] : buildNewTabOptions(state, ctx, { sessionId, cwd })),
+    // state is the whole session state — every field it wraps is fair game
+    // for the descriptors' available() callbacks. (The render's own guard
+    // sits below every hook; this memo must handle the no-session case
+    // itself.)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [state, ctx, sessionId, cwd],
+  )
+
   /**
    * Agent terminals push: subscribe to the host's live list of agent-owned
    * terminals for this session (created by the model through the
@@ -1581,7 +1595,7 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore }) {
           <Workbench
             state={state}
             tree={augmentedTree}
-            newTabOptions={buildNewTabOptions(state, ctx, { sessionId, cwd })}
+            newTabOptions={newTabOptions}
             actions={wrappedActions}
             onNewTab={onNewTab}
             renderTab={renderTab}
@@ -1736,7 +1750,7 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore }) {
           <Workbench
             state={state}
             tree={state.bottomSplits}
-            newTabOptions={buildNewTabOptions(state, ctx, { sessionId, cwd })}
+            newTabOptions={newTabOptions}
             actions={actions}
             onNewTab={onNewTab}
             renderTab={(tab, active, paneId) => renderTab(tab, active, paneId, 'bottom')}
