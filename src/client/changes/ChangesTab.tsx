@@ -3,22 +3,44 @@
  * (repository truth: staged/unstaged files, commit box, history) and the
  * session round (agent truth: every file the model read, wrote, or edited).
  * Both lenses preview their selections in a shared resizable bottom pane
- * ({@link DiffPane}); git targets can expand into the dedicated diff tab.
+ * ({@link DiffPane}); git targets expand into the dedicated diff tab —
+ * docked in a pane, or floated as a free window per the tab's setting.
  * The active lens and the pane height persist in the tab's meta, so the tab
  * reopens exactly where it was left.
+ *
+ * The session events ride the host's `changes.ops` route (the client
+ * runtime exposes no event-log face): the tab pulls the delta past its
+ * cursor while visible, folds it into ops, and publishes the op count to a
+ * module-level cache the tab-strip badge reads.
  */
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type { SidebarSessionEvent } from '../../context-types.ts'
 import type { TabComponentProps } from '../service.ts'
 import { t } from '../locales.ts'
-import type { SidebarDiffRef } from '../state.ts'
+import { api } from '../api.ts'
+import { floatTab, type SidebarDiffRef } from '../state.ts'
 import { GitLens } from './GitLens.tsx'
 import { SessionLens } from './SessionLens.tsx'
 import { DiffPane, diffTabOf, type ChangesPreview } from './DiffPane.tsx'
-import type { FileOp } from './ops.ts'
+import { extractFileOps, knownContentBefore, type FileOp } from './ops.ts'
 import css from './changes.module.css'
 
 /** The default preview pane height (px) before the first drag. */
 const PANE_HEIGHT_DEFAULT = 300
+
+/** Cap on accumulated events: the lens shows the recent window, not eternity
+ *  (the host enforces the same bound per response). */
+const EVENTS_CAP = 4000
+
+/** Live op count per session: the tab's poller writes, the badge reads (a
+ *  badge cannot fetch — it must resolve synchronously during render). */
+const opCounts = new Map<string, number>()
+
+/** The session's traced-op count as of the last poll (undefined before the
+ *  tab has ever pulled; 0 hides the badge pill). */
+export function opCountOf(sessionId: string): number | undefined {
+  return opCounts.get(sessionId)
+}
 
 type Lens = 'git' | 'session'
 
@@ -35,6 +57,50 @@ export function ChangesTab({ ctx, store, scope, tab, visible, onOpenFile, onOpen
   const [paneHeight, setPaneHeight] = useState<number>(
     typeof meta.previewH === 'number' && meta.previewH >= 140 ? meta.previewH : PANE_HEIGHT_DEFAULT,
   )
+
+  // ── Session-event accumulation: one pull on mount, then a 2.5s delta
+  //    poll while visible (paused otherwise; the next visible tick catches
+  //    up). The cursor is the last delivered seq, so each poll ships only
+  //    what the accumulator lacks. ────────────────────────────────────────
+  const eventsRef = useRef<readonly SidebarSessionEvent[]>([])
+  const seqRef = useRef(0)
+  const pollGen = useRef(0)
+  const [opsError, setOpsError] = useState(false)
+  const [tick, setTick] = useState(0)
+  const pull = useCallback(async (): Promise<void> => {
+    const generation = pollGen.current
+    try {
+      const { events, lastSeq } = await api.changesOps(scope, seqRef.current)
+      if (generation !== pollGen.current) return
+      if (events.length > 0) {
+        const merged = [...eventsRef.current, ...events]
+        eventsRef.current = merged.length > EVENTS_CAP ? merged.slice(merged.length - EVENTS_CAP) : merged
+      }
+      if (lastSeq > seqRef.current) seqRef.current = lastSeq
+      opCounts.set(scope.sessionId, extractFileOps(eventsRef.current).length)
+      setOpsError(false)
+      setTick(value => value + 1)
+    } catch {
+      // Offline / route unavailable: keep the last fold; surface it inline
+      // only while nothing has ever loaded.
+      if (generation === pollGen.current) setOpsError(true)
+    }
+  }, [scope.sessionId, scope.cwd])
+  useEffect(() => {
+    pollGen.current += 1
+    eventsRef.current = []
+    seqRef.current = 0
+    setOpsError(false)
+  }, [scope.sessionId])
+  useEffect(() => {
+    void pull()
+    if (!visible) return
+    const timer = window.setInterval(() => { void pull() }, 2_500)
+    return () => { window.clearInterval(timer) }
+  }, [visible, pull])
+  // tick only forces the re-render; the fold reads the ref directly.
+  void tick
+  const ops = extractFileOps(eventsRef.current)
 
   /** Persist a meta patch onto the tab (lens choice, pane height). */
   const patchMeta = (patch: ChangesMeta): void => {
@@ -55,8 +121,22 @@ export function ChangesTab({ ctx, store, scope, tab, visible, onOpenFile, onOpen
   }
 
   /** Preview one session op (with its best-effort prior content snapshot). */
-  const previewOp = (path: string, op: FileOp, prior: string | undefined): void => {
-    setPreview({ kind: 'op', path, op, prior })
+  const previewOp = (path: string, op: FileOp): void => {
+    setPreview({ kind: 'op', path, op, prior: knownContentBefore(ops, path, op) })
+  }
+
+  /** Expand the current git preview into the dedicated diff tab: docked
+   *  into the shell's diff pane, or floated as a free window centered on
+   *  the viewport when the tab's diff-open setting asks for it (default). */
+  const expandPreview = (): void => {
+    if (preview?.kind !== 'git') return
+    const diffTab = diffTabOf(preview.ref)
+    onOpenDiff?.(diffTab)
+    if (store.getPrefs().changesDiffFloat !== false) {
+      const x = Math.round(window.innerWidth / 2)
+      const y = Math.round(window.innerHeight / 2)
+      store.reduce(state => floatTab(state, diffTab.id, x, y))
+    }
   }
 
   const previewKey = (target: ChangesPreview): string => target.kind === 'git'
@@ -102,9 +182,8 @@ export function ChangesTab({ ctx, store, scope, tab, visible, onOpenFile, onOpen
         )
         : (
           <SessionLens
-            ctx={ctx}
-            scope={scope}
-            visible={visible}
+            ops={ops}
+            loadError={opsError && ops.length === 0}
             onPreview={previewOp}
             selectedCallId={preview !== null && preview.kind === 'op' ? preview.op.callId : null}
           />
@@ -117,9 +196,7 @@ export function ChangesTab({ ctx, store, scope, tab, visible, onOpenFile, onOpen
           height={paneHeight}
           onHeightCommit={(height) => { setPaneHeight(height); patchMeta({ previewH: height }) }}
           onClose={() => { setPreview(null) }}
-          onExpand={() => {
-            if (preview.kind === 'git') onOpenDiff?.(diffTabOf(preview.ref))
-          }}
+          onExpand={expandPreview}
         />
       )}
     </div>

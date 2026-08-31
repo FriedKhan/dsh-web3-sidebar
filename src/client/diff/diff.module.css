@@ -43,13 +43,18 @@
 .tokMacro { color: color-mix(in oklab, var(--dsw-alias-state-error-primary) 45%, var(--dsw-alias-state-business-primary)); }
 
 /* Hunk-fold row: collapsed marker chip; expanded padding drops to 0 so the
-   revealed rows keep the x-alignment of hunk rows (they carry their own). */
-.foldRow { padding: 0 10px; cursor: pointer; }
+   revealed rows keep the x-alignment of hunk rows (they carry their own).
+   Only an expandable fold (enough hidden rows to be worth a click) reads as
+   interactive — the › chevron matches the multi-file document's disclosure. */
+.foldRow { padding: 0 10px; }
+.foldRow[data-expandable='true'] { cursor: pointer; }
+.foldRow[data-expandable='true']:hover { background: var(--dsw-alias-interactive-bg-hover); }
 .foldRow[data-expanded='true'] { padding: 0; }
-.foldRow:hover { background: var(--dsw-alias-interactive-bg-hover); }
-.foldMarker { display: inline-block; padding: 2px 6px; border-radius: 4px; margin: 2px 0; color: var(--dsw-alias-label-tertiary); background: var(--dsw-alias-interactive-bg-hover); font-style: italic; }
 .foldRow[data-expanded='true'] { cursor: default; }
 .foldRow[data-expanded='true'] .foldMarker { display: none; }
+.foldMarker { display: inline-flex; align-items: center; gap: 5px; padding: 2px 7px; border-radius: 4px; margin: 2px 0; color: var(--dsw-alias-label-tertiary); background: var(--dsw-alias-interactive-bg-hover); }
+.foldRow[data-expandable='true'] .foldMarker { color: var(--dsw-alias-label-secondary); }
+.foldRow[data-expandable='true'] .foldMarker::before { content: '›'; color: var(--dsw-alias-label-tertiary); transition: transform var(--ds-transition-duration-slow) var(--ds-ease-in-out); }
 
 /* The huge-file overflow reveal under a capped hunk. */
 .expand { display: block; width: calc(100% - 20px); margin: 4px 10px; padding: 4px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 6px; background: transparent; color: var(--dsw-alias-label-secondary); font: inherit; font-size: 11px; cursor: pointer; }

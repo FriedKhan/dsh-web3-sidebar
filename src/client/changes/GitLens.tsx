@@ -12,8 +12,8 @@
  */
 import { useCallback, useEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react'
 import {
-  Button, IconBranchOutline16, IconCodeOutline16, IconCopyOutline16, IconRefreshOutline16,
-  IconTrashOutline16, Input, Menu, Modal, writeClipboard,
+  Button, IconCodeOutline16, IconCopyOutline16, IconPlusOutline16,
+  IconRefreshOutline16, IconTrashOutline16, Input, Menu, Modal, writeClipboard,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { GitLogEntry, GitStatusEntry, GitStatusResult, GitWorktree, SessionScope } from '../api.ts'
 import { api } from '../api.ts'
@@ -418,7 +418,7 @@ export function GitLens(props: GitLensProps) {
           disabled={busy}
           onClick={() => { void stageEntry(entry, staged) }}
         >
-          {staged ? <IconTrashOutline16 /> : <IconBranchOutline16 />}
+          {staged ? <IconTrashOutline16 /> : <IconPlusOutline16 />}
         </button>
       </div>
     )
@@ -596,7 +596,7 @@ export function GitLens(props: GitLensProps) {
                 : []),
               fileMenu?.staged === true
                 ? { id: 'stage', label: t('unstage'), icon: <IconTrashOutline16 size={14} /> }
-                : { id: 'stage', label: t('stage'), icon: <IconBranchOutline16 size={14} /> },
+                : { id: 'stage', label: t('stage'), icon: <IconPlusOutline16 size={14} /> },
               ...(fileMenu !== null && !isUntracked(fileMenu.entry)
                 ? [{ id: 'discard', label: t('discard'), icon: <IconTrashOutline16 size={14} />, danger: true }]
                 : []),

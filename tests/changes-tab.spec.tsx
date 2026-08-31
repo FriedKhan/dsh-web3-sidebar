@@ -1,15 +1,16 @@
 /**
  * The unified changes tab shell: the lens switcher swaps the Git lens for
- * the session lens, and a Git-lens file row opens the shared preview pane
+ * the session lens, a Git-lens file row opens the shared preview pane
  * (loaded through the mocked git API, rendered by the shared DiffFiles
- * stack) instead of minting a diff tab directly.
+ * stack), and the session ops ride the mocked `changes.ops` poll — the
+ * event poll, the op fold and the badge cache all live in the tab.
  */
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { act } from 'react-dom/test-utils'
-import { ChangesTab } from '../src/client/changes/ChangesTab.tsx'
+import { ChangesTab, opCountOf } from '../src/client/changes/ChangesTab.tsx'
 import { createSidebarStore } from '../src/client/state.ts'
 import { api, type GitStatusResult, type GitWorktree } from '../src/client/api.ts'
 import type { Context } from '../src/context-types.ts'
@@ -19,16 +20,21 @@ import type { SidebarTab } from '../src/client/state.ts'
 
 const MAIN = 'C:/repo/main'
 
+/** One synthetic tool/call + tool/result pair (write of one file). */
+function writeEvents(seq: number, path: string): Array<{ type: string; seq: number; time: number; data: Record<string, unknown> }> {
+  return [
+    { type: 'tool/call', seq, time: seq, data: { name: 'write', callId: `w${seq}`, arguments: JSON.stringify({ file_path: path, content: 'body' }) } },
+    { type: 'tool/result', seq: seq + 1, time: seq + 1, data: { message: { source: { kind: 'tool', callId: `w${seq}` }, content: [{ type: 'tool-result', content: [{ type: 'text', text: 'ok' }] }] } } },
+  ]
+}
+
 function fakeContext(): Context {
   return {
-    sessions: { get: () => undefined },
     get: () => undefined,
-    on: () => () => { /* no-op */ },
   } as unknown as Context
 }
 
-function mount(root: Root): void {
-  const tab: SidebarTab = { id: 'git', type: 'git', title: 'Changes' }
+function mount(root: Root, tab: SidebarTab = { id: 'git', type: 'git', title: 'Changes' }): void {
   act(() => {
     root.render(createElement(ChangesTab, {
       ctx: fakeContext(),
@@ -108,21 +114,30 @@ describe('ChangesTab', () => {
     }
   })
 
-  it('switches to the session lens, which shows its empty state without ops', async () => {
+  it('folds the polled session events into session-lens rows and the badge cache', async () => {
     mockGit([])
+    const ops = vi.spyOn(api, 'changesOps')
+      .mockResolvedValue({ events: [...writeEvents(1, 'src/a.ts'), ...writeEvents(3, 'src/b.ts')], lastSeq: 4 })
+
     const container = document.createElement('div')
     document.body.append(container)
     const root: Root = createRoot(container)
     try {
       mount(root)
       await flushEffects()
+
+      // The tab pulled once on mount and published the op count.
+      expect(ops).toHaveBeenCalled()
+      expect(opCountOf('session')).toBe(2)
+
       const group = container.querySelector('[role="group"]')
-      expect(group).not.toBeNull()
       const buttons = [...group!.querySelectorAll<HTMLButtonElement>('button')]
       await act(async () => { buttons[1]!.click() })
-      // No session events in the fake context: the session lens empty state
-      // (locale-agnostic — the test env may resolve zh or en).
-      expect(container.textContent).toMatch(/本会话还没有文件操作|No file operations/)
+      // Two files grouped, newest first; the write chip carries its count.
+      expect(container.textContent).toContain('src/b.ts')
+      expect(container.textContent).toContain('src/a.ts')
+      const chips = [...container.querySelectorAll('button[aria-pressed]')]
+      expect(chips.some(chip => /写入\s*2|Write\s*2/.test(chip.textContent ?? ''))).toBe(true)
       // The git lens (its branch picker) is unmounted by the switch.
       expect(container.querySelector('select')).toBeNull()
     } finally {

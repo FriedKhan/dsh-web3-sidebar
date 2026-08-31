@@ -206,6 +206,7 @@ export function DiffRows({ segments, lang }: DiffRowsProps) {
       <div
         key={`fold-${String(segIndex)}`}
         className={css.foldRow}
+        data-expandable="true"
         data-expanded={isExpanded ? 'true' : undefined}
         onClick={() => {
           setExpandedFolds(prev => {

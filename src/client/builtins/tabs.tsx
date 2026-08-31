@@ -16,14 +16,13 @@ import { openSidebarFile } from '../intercept.tsx'
 import { EditorHost } from '../EditorHost.tsx'
 import { OpenWithSettings } from '../open-with-settings.tsx'
 import { lazyChunkComponent } from '../lazy-chunk.tsx'
-import { ChangesTab } from '../changes/ChangesTab.tsx'
-import { extractFileOps } from '../changes/ops.ts'
+import { ChangesTab, opCountOf } from '../changes/ChangesTab.tsx'
 import { DiffTab } from '../DiffTab.tsx'
 import { SubagentView } from '../SubagentView.tsx'
 import { consumeSidechatSeed, SideChatView, sidechatThreadIdOf } from '../SideChatView.tsx'
 import { api } from '../api.ts'
 import { BrowserView } from '../BrowserView.tsx'
-import { IconTerminalOutline16, IconDiffOutline16, IconGlobeOutline16 } from '../icons.tsx'
+import { IconTerminalOutline16, IconDiffOutline16, IconGlobeOutline16, IconFloatWindowOutline16, IconPanelBottomOutline16 } from '../icons.tsx'
 import { TERMINAL_FONT_SIZE_MAX, TERMINAL_FONT_SIZE_MIN } from '../../prefs-shared.ts'
 import type { ComponentType } from 'react'
 import type { SessionScope } from '../api.ts'
@@ -144,17 +143,42 @@ export function builtinTabs(ctx: Context, options: BuiltinTabOptions = {}): read
       // The unified changes tab (id kept as 'git' so persisted layouts keep
       // resolving): the Git lens is the former source-control panel; the
       // session lens is the former file-trace tab (PR #471). Both preview
-      // through one shared diff stack, and the badge counts this session's
-      // file ops (live from the event log — the git status itself needs a
-      // fetch, so it stays out of the badge).
+      // through one shared diff stack. The badge reads the op-count cache
+      // the tab's event poll publishes (the client ctx exposes no event
+      // log, and the git status needs a fetch — both stay out of the badge).
       id: 'git',
       title: () => t('changes'),
       icon: (size: number) => <IconDiffOutline16 size={size} />,
       order: 20,
       single: true,
-      badge: (ctx, scope) => {
-        const events = ctx.sessions.get(scope.sessionId)?.events
-        return events === undefined ? null : extractFileOps(events).length
+      badge: (_ctx, scope) => {
+        const count = opCountOf(scope.sessionId)
+        return count === undefined || count === 0 ? null : count
+      },
+      // Declarative settings: the diff-open picker (free window vs docked
+      // pane) renders as an iconed select row under the changes card's gear
+      // in the Side card settings page.
+      settings: {
+        toggles: [{
+          key: 'changesDiffFloat',
+          type: 'select',
+          title: () => t('changesDiffOpenTitle'),
+          desc: () => t('changesDiffOpenDesc'),
+          options: [
+            {
+              value: true,
+              icon: (size: number) => <IconFloatWindowOutline16 size={size} />,
+              title: () => t('changesDiffOpenFloat'),
+              desc: () => t('changesDiffOpenFloatDesc'),
+            },
+            {
+              value: false,
+              icon: (size: number) => <IconPanelBottomOutline16 size={size} />,
+              title: () => t('changesDiffOpenPane'),
+              desc: () => t('changesDiffOpenPaneDesc'),
+            },
+          ],
+        }],
       },
       component: ({ ctx, store, scope, tab, visible, onOpenFile, onOpenDiff }) => (
         <ChangesTab

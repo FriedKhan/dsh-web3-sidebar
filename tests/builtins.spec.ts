@@ -44,6 +44,20 @@ describe('built-in tab registrations', () => {
     expect(changes?.component).toBeDefined()
   })
 
+  it('the changes tab declares the diff-open picker (free window default)', () => {
+    const { service } = setup()
+    const toggles = service.getTab('git')?.settings?.toggles ?? []
+    expect(toggles.map(t => t.key)).toEqual(['changesDiffFloat'])
+    const picker = toggles[0]
+    expect(picker?.type).toBe('select')
+    expect(picker?.title).toBeDefined()
+    expect(picker?.desc).toBeDefined()
+    const options = picker?.options ?? []
+    // Float first (the default the reducer and prefs ship), pane second.
+    expect(options.map(o => o.value)).toEqual([true, false])
+    expect(options.every(o => o.icon !== undefined && o.title !== undefined && o.desc !== undefined)).toBe(true)
+  })
+
   it('only diff is hidden from the + menu; editor is the visible files window (order 10)', () => {
     const { service } = setup()
     expect(service.getTabs().filter(t => t.hidden).map(t => t.id)).toEqual(['diff'])
