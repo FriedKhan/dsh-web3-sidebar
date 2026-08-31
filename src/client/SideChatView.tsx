@@ -29,10 +29,15 @@ import clsx from 'clsx'
 import {
   ConnectionIndicator,
   DiffBlock,
+  IconApiOutline14,
+  IconBrowseOutline16,
   IconChevronRightOutline14,
+  IconEditOutline16,
   IconNewChatOutline16,
   IconPlusOutline16,
+  IconSearchOutline16,
   IconSendOutline16,
+  IconSparkle16,
   IconStopFill16,
   MarkdownText,
   Menu,
@@ -149,8 +154,13 @@ function CollapsibleRow(props: {
   mono?: boolean
   streaming?: boolean
   failed?: boolean
+  /** 16px leading glyph (tool-kind icon, the main conversation's row head). */
+  icon?: React.ReactNode
   children?: React.ReactNode
 }): React.ReactNode {
+  const leading = props.icon === undefined ? null : (
+    <span className={css.sidechatRowIcon}>{props.icon}</span>
+  )
   const label = (
     <span
       className={clsx(
@@ -168,6 +178,7 @@ function CollapsibleRow(props: {
   if (props.children === undefined) {
     return (
       <div className={clsx(css.sidechatRowLine, css.sidechatRowStatic, props.failed === true && css.sidechatRowFailed)}>
+        {leading}
         {label}
         {meta}
       </div>
@@ -185,6 +196,7 @@ function CollapsibleRow(props: {
         <span className={css.sidechatRowChevron}>
           <IconChevronRightOutline14 size={12} />
         </span>
+        {leading}
         {label}
         {meta}
       </summary>
@@ -213,6 +225,30 @@ function toolCardBody(card: SidechatToolCard, executing: boolean, labels: RowLab
     return <DiffBlock diffs={card.diffs} labels={labels.diff} />
   }
   return <ReadBlock label={card.label} lines={card.lines} totalLines={card.totalLines} lang={card.lang} labels={labels.read} />
+}
+
+/** The tool row's 16px leading slot, the way the main conversation draws it
+ *  (GenericToolCard's variant table): the tool-kind glyph at 14, replaced by
+ *  an error StateDot on failed rows. */
+function toolLeading(name: string, failed: boolean): React.ReactNode {
+  if (failed) return <StateDot state="error" />
+  switch (name) {
+    case 'bash':
+    case 'pwsh':
+      return <IconApiOutline14 size={14} />
+    case 'read':
+    case 'web_fetch':
+      return <IconBrowseOutline16 size={14} />
+    case 'edit':
+    case 'write':
+      return <IconEditOutline16 size={14} />
+    case 'grep':
+    case 'glob':
+    case 'web_search':
+      return <IconSearchOutline16 size={14} />
+    default:
+      return <IconSparkle16 size={14} />
+  }
 }
 
 /** One row renderer (React keys ride the source event seq). */
@@ -275,6 +311,7 @@ function renderRow(row: SidechatTranscriptRow, labels: RowLabels): React.ReactNo
           key={`${row.kind}:${row.seq}`}
           label={row.name}
           meta={toolArgsSummary(row.args)}
+          icon={toolLeading(row.name, row.failed)}
           mono
           streaming={row.executing === true}
           failed={row.failed}

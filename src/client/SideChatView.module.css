@@ -221,6 +221,18 @@
   transform: rotate(90deg);
 }
 
+/* Tool-kind leading glyph (the main conversation's 16px slot; the icon
+ * itself renders at 14). Failed rows pass a StateDot instead. */
+.sidechatRowIcon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
 .sidechatRowLabel {
   flex: none;
   max-width: 60%;
