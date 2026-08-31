@@ -993,7 +993,14 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore }) {
     // drag write-only (no React re-render mid-drag).
     bottomRef.current?.style.setProperty('right', `${(window.innerWidth - centerRectRef.current.right) + (width - (state?.width ?? 0))}px`)
     const bottomPush = !narrow && state?.bottomOpen === true ? height + keyboardInset : 0
-    writeGeometry(width, bottomPush)
+    // The pushed width must ride the same gate as the committed push effect
+    // (layoutPushSize): a collapsed right panel pushes 0. The bottom strip is
+    // the only drag reachable with the panel closed — writing the panel's
+    // persisted width preference here squeezed #root mid-drag, dropped the
+    // host viewport across its 1024px auto-collapse breakpoint, and the
+    // native left sidebar snapped to its 56px rail (and back on release).
+    const pushWidth = !narrow && state?.panelOpen === true ? Math.min(width, window.innerWidth) : 0
+    writeGeometry(pushWidth, bottomPush)
   }
 
   // Drags write at most once per frame: pointer events fire several times
