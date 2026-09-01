@@ -8,14 +8,14 @@ allowBuilds:
   node-pty: true
   protobufjs: true
 
-# The 0.1.2-alpha.3 @deepseek-ai/* packages publish with workspace-era
-# dependency metadata that does not fully match their published artifacts:
-# dsh-subagent imports `admitPromptContent` from @deepseek-ai/dsh-attachment
-# without declaring it, and several transitive peers drift to stale versions
-# (0.1.1-rc.1 / 0.1.2-alpha.2) that predate the ^0.1.2-alpha.3 ranges the
-# alpha.3 packages declare. Pin the known stragglers to the alpha.3 line the
-# upstream monorepo actually tests against; revisit when upstream fixes its
-# published metadata.
+# The @deepseek-ai/* packages declare their dsh-* siblings as peerDependencies
+# (the DSH host bundle provides them all at mount time), but this repo installs
+# only a subset as direct devDependencies, so the remaining transitive peers
+# resolve to stale copies under pnpm — e.g. dsh-attachment 0.1.1-rc.1, which
+# predates the `admitPromptContent` export that dsh-subagent's artifacts
+# import. Pin those to the alpha line the upstream monorepo tests against.
+# This is a standing shim, not an upstream bug workaround: extend the list
+# (audit with `pnpm peers check`) whenever the DSH baseline is bumped.
 overrides:
   '@deepseek-ai/dsh-attachment': 0.1.2-alpha.3
   '@deepseek-ai/dsh-code-runtime': 0.1.2-alpha.3
