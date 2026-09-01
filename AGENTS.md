@@ -19,13 +19,13 @@
 
 「npm 打包 → 真实挂载 → 无头渲染」门禁（证明打包产物在真实 DSH 挂载后不 crash）：`pnpm build && pnpm pack` 产 tarball → `scripts/e2e-mount.sh` 装进全新 scratch profile（`dsh plugin --profile web add file:<tarball>`）并启动真实 `dsh web`（keyless，`--port 0`）→ `tests/e2e/mount.e2e.ts`（Playwright）断言 `[data-dsh-better-sidebar]` 挂载、无错误条/pageerror/console 错误，经「+ 菜单」逐个打开内置 tab（含终端懒加载 chunk），再经文件树打开 seed 文件强制加载 editor chunk（`client-editor.js`）。
 
-本地：`pnpm build && pnpm pack && pnpm exec playwright install chromium && pnpm test:mount`。CI 钉 `@deepseek-ai/dsh@0.1.2-alpha.2`（`alpha` dist-tag；peer 下限 `^0.1.2-alpha.2`）。e2e spec 命名 `*.e2e.ts` + vitest `exclude` 双保险；**改 `exclude` 必须保留默认排除项**（exclude 整体替换默认值）。
+本地：`pnpm build && pnpm pack && pnpm exec playwright install chromium && pnpm test:mount`。CI 钉 `@deepseek-ai/dsh@0.1.2-alpha.3`（`alpha` dist-tag；peer 下限 `^0.1.2-alpha.3`）。e2e spec 命名 `*.e2e.ts` + vitest `exclude` 双保险；**改 `exclude` 必须保留默认排除项**（exclude 整体替换默认值）。
 
 ---
 
 ## 3. DSH 0.1.2-alpha 适配要点（alpha 通道）
 
-**v0.18.0-alpha.0 起插件进入 alpha 通道，仅支持 DSH 0.1.2-alpha.x**（peer 下限 `^0.1.2-alpha.2`，CI 钉 `@deepseek-ai/dsh@0.1.2-alpha.2`，npm 走 `alpha` dist-tag）。对 0.1.0-rc.8 ~ 0.1.1-rc.2 的兼容层已删除——双方言 RPC（点分回退）、MarkdownText 双形状 labels、`dsh-client-runtime` externals/inject 残留行；stable DSH 用户请装 v0.17.1（npm `latest`）。发版：release.yml 按版本号是否含 `-` 自动选 `alpha`/`latest` dist-tag。
+**v0.18.0-alpha.0 起插件进入 alpha 通道，仅支持 DSH 0.1.2-alpha.x**（peer 下限 `^0.1.2-alpha.3`，CI 钉 `@deepseek-ai/dsh@0.1.2-alpha.3`，npm 走 `alpha` dist-tag）。对 0.1.0-rc.8 ~ 0.1.1-rc.2 的兼容层已删除——双方言 RPC（点分回退）、MarkdownText 双形状 labels、`dsh-client-runtime` externals/inject 残留行；stable DSH 用户请装 v0.17.1（npm `latest`）。发版：release.yml 按版本号是否含 `-` 自动选 `alpha`/`latest` dist-tag。
 
 宿主契约（均经真机挂载冒烟 14/14 验证）：
 
@@ -37,6 +37,7 @@
 6. **`dsh-subagent` 的 `SUBAGENT_DESCRIPTOR_VERSION` 2 → 3**：sidechat 种子的 `subagent/descriptor` 版本由宿主包盖章，插件不硬编码；测试断言跟随常量（`tests/sidechat-routes.spec.ts`），勿钉字面量。
 7. **`@deepseek-ai/dsh-client-runtime` 包已消亡**（继任 seed 是裸名 `dsh-client-store`，无 `/client` 子路径）：peerDependencies、devDependencies、`dsh.client.inject`、chunk externals 白名单（`src/client/chunk-loader.ts` / `tsdown.config.ts` / `tests/chunk-loader.spec.ts` / `tests/manifest-consistency.spec.ts` 四处同步）均已无该条目。
 8. **e2e scratch profile 的 `minimumReleaseAgeExclude` 含 `'@deepseek-ai/*'`**（`scripts/e2e-mount.sh` / `e2e-aggregate-mount.sh`，与仓库根 `pnpm-workspace.yaml` 同策）：alpha 版本常在发布后 24h 内跑 lane，pnpm 11 的 `minimumReleaseAge` 默认会拒装新鲜包。
+9. **alpha 发布物依赖元数据失配需 overrides 兜底**（alpha.3 首见）：`dsh-subagent@0.1.2-alpha.3` 运行时 import `dsh-attachment` 的 `admitPromptContent` 却未声明该依赖，另有 6 个传递 peer（dsh-scope / dsh-session-projection / dsh-system-prompt / dsh-user-approval / dsh-util-time / dsh-code-runtime）解析到旧版——仓库根 `pnpm-workspace.yaml` 的 `overrides` 统一钉到 alpha 线，上游修复元数据后可移除；`@deepseek-ai/cordis` peer 自 alpha.3 起要求 `^4.0.2`（上游全线 peer 已升）。适配新 alpha 版本时先跑 `pnpm peers check` 复查失配清单。
 
 ---
 
