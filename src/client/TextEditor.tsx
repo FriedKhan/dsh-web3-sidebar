@@ -22,6 +22,7 @@ import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { IconCheckOutline16, MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives'
 import { markdownTextProps } from './markdown-labels.tsx'
 import { api, htmlUrl } from './api.ts'
+import { markdownPreviewSource } from './markdown-frontmatter.ts'
 import { rewriteLocalImageUrls } from './markdown-images.ts'
 import { languageForPath } from './lang.ts'
 import { cmSurfaceTheme, CmThemeCompartment } from './cm-themes.ts'
@@ -237,25 +238,28 @@ export function TextEditor(props: FileViewerProps) {
 
   /** The markdown source the preview renders (draft wins over saved content). */
   const mdText = draft ?? content ?? ''
-  /** The preview source: `mdText` with local image destinations rewritten to
-   *  absolute media URLs (see {@link rewriteLocalImageUrls}); the raw
-   *  `mdText` stays untouched for selection/line lookup and for mermaid-block
-   *  detection, which are unaffected by image syntax. */
+  /** Preview-only source with a closed leading YAML frontmatter block hidden.
+   *  The raw `mdText` stays untouched for editing, saving, and selection line
+   *  lookup. All preview renderers share this source so plain Markdown,
+   *  Mermaid, and documents containing raw HTML behave consistently. */
+  const previewMdText = markdown ? markdownPreviewSource(mdText) : mdText
+  /** The preview source with local image destinations rewritten to absolute
+   *  media URLs (see {@link rewriteLocalImageUrls}). */
   const previewText = markdown
-    ? rewriteLocalImageUrls(mdText, scope, path, window.location.origin)
-    : mdText
+    ? rewriteLocalImageUrls(previewMdText, scope, path, window.location.origin)
+    : previewMdText
   /** md/mermaid block split for the preview (mermaid fences lift out). Split
    *  only in preview mode: edit-mode keystrokes must not re-scan the source. */
   const mdBlocks = useMemo(
-    () => (markdown && mode === 'preview' ? splitMermaidBlocks(mdText) : []),
-    [markdown, mode, mdText],
+    () => (markdown && mode === 'preview' ? splitMermaidBlocks(previewMdText) : []),
+    [markdown, mode, previewMdText],
   )
   /** Raw-HTML analysis (block runs lifted out + inline gate). Non-null only
    *  for documents that actually contain HTML — plain markdown keeps the
    *  legacy single-pass render path below, byte-for-byte. */
   const htmlInfo = useMemo(
-    () => (markdown && mode === 'preview' ? analyzeMarkdownHtml(mdText) : null),
-    [markdown, mode, mdText],
+    () => (markdown && mode === 'preview' ? analyzeMarkdownHtml(previewMdText) : null),
+    [markdown, mode, previewMdText],
   )
   const hasMermaid = useMemo(
     () => htmlInfo !== null
