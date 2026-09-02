@@ -489,6 +489,25 @@ body[data-dsh-sidebar-dragging] .bottomPanel {
   padding-top: var(--dsh-title-bar-strip, 40px);
 }
 
+/* ── Collapsed cluster alignment with the DSH web session header ───────── */
+
+/* While the right panel is open, the cluster rides the panel's 34px tab
+   strip (28px buttons at top: 3). Collapsed, it floats over DSH's own
+   session header instead — whose controls (title, "Session log" capsule)
+   are vertically centered at 28px on both desktop and narrow viewports.
+   top: 3 then strands the cluster ~11px above that row; re-center the
+   28px buttons at 14px. The attribute disappears while the panel is open,
+   so the tab-strip alignment above is untouched. With position
+   compatibility active the DSH header sits below the caption strip, hence
+   strip + 14. */
+:global(body[data-dsh-sidebar-collapsed]) .toggleCluster {
+  top: calc(14px + env(safe-area-inset-top));
+}
+
+:global(body[data-dsh-sidebar-collapsed][data-dsh-title-bar-compat]) .toggleCluster {
+  top: calc(var(--dsh-title-bar-strip, 40px) + 14px);
+}
+
 /* The shared corner (both panels open): the intersection of the right
    panel's left edge and the bottom panel's top edge. Horizontal drags
    resize the width, vertical drags the height — the two panels drag
