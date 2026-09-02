@@ -407,6 +407,20 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore }) {
   }, [sessionId, summaryCwd])
   const cwd = summaryCwd ?? fetchedCwd
 
+  // The + menu options ride a memo so the two Workbenches share ONE array
+  // identity across renders that did not change the store (drag state,
+  // viewport resize): fresh arrays per render re-rendered every LeafView's
+  // + affordance whether or not anything tab-related moved.
+  const newTabOptions = useMemo(
+    () => (state === undefined || sessionId === undefined ? [] : buildNewTabOptions(state, ctx, { sessionId, cwd })),
+    // state is the whole session state — every field it wraps is fair game
+    // for the descriptors' available() callbacks. (The render's own guard
+    // sits below every hook; this memo must handle the no-session case
+    // itself.)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [state, ctx, sessionId, cwd],
+  )
+
   /**
    * Agent terminals push: subscribe to the host's live list of agent-owned
    * terminals for this session (created by the model through the
@@ -742,6 +756,7 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore }) {
         ?.parentElement as HTMLElement | undefined
       if (col === undefined || !col.isConnected) {
         if (centerColRef.current !== null) {
+          centerColRef.current.removeAttribute('data-dsh-center-col')
           centerColRef.current = null
           observer?.disconnect()
           observer = undefined
@@ -754,8 +769,13 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore }) {
         // measure it once. Same-node size changes are the ResizeObserver's
         // job — no forced measurement here, because a forced
         // getBoundingClientRect per mutation would reflow the shell at
-        // mutation cadence.
+        // mutation cadence. The tag retargets with the ref: layout.css's
+        // bottom-push rule anchors on [data-dsh-center-col], so exactly the
+        // measured node carries it (a stale tag on a swapped-out node would
+        // leave the push rule anchorless or doubled).
+        centerColRef.current?.removeAttribute('data-dsh-center-col')
         centerColRef.current = col
+        col.setAttribute('data-dsh-center-col', '')
         observer?.disconnect()
         observer = new ResizeObserver(measureCenter)
         observer.observe(col)
@@ -808,6 +828,7 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore }) {
       observer?.disconnect()
       watcher.disconnect()
       htmlStyleWatcher.disconnect()
+      centerColRef.current?.removeAttribute('data-dsh-center-col')
       centerColRef.current = null
     }
     // Opening the bottom panel re-runs the whole locate/measure chain: a
@@ -993,7 +1014,14 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore }) {
     // drag write-only (no React re-render mid-drag).
     bottomRef.current?.style.setProperty('right', `${(window.innerWidth - centerRectRef.current.right) + (width - (state?.width ?? 0))}px`)
     const bottomPush = !narrow && state?.bottomOpen === true ? height + keyboardInset : 0
-    writeGeometry(width, bottomPush)
+    // The pushed width must ride the same gate as the committed push effect
+    // (layoutPushSize): a collapsed right panel pushes 0. The bottom strip is
+    // the only drag reachable with the panel closed — writing the panel's
+    // persisted width preference here squeezed #root mid-drag, dropped the
+    // host viewport across its 1024px auto-collapse breakpoint, and the
+    // native left sidebar snapped to its 56px rail (and back on release).
+    const pushWidth = !narrow && state?.panelOpen === true ? Math.min(width, window.innerWidth) : 0
+    writeGeometry(pushWidth, bottomPush)
   }
 
   // Drags write at most once per frame: pointer events fire several times
@@ -1574,7 +1602,7 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore }) {
           <Workbench
             state={state}
             tree={augmentedTree}
-            newTabOptions={buildNewTabOptions(state, ctx, { sessionId, cwd })}
+            newTabOptions={newTabOptions}
             actions={wrappedActions}
             onNewTab={onNewTab}
             renderTab={renderTab}
@@ -1729,7 +1757,7 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore }) {
           <Workbench
             state={state}
             tree={state.bottomSplits}
-            newTabOptions={buildNewTabOptions(state, ctx, { sessionId, cwd })}
+            newTabOptions={newTabOptions}
             actions={actions}
             onNewTab={onNewTab}
             renderTab={(tab, active, paneId) => renderTab(tab, active, paneId, 'bottom')}
