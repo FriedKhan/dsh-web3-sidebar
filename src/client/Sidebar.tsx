@@ -47,6 +47,7 @@ import { IconPanelBottomOutline16, IconPanelRightOutline16 } from './icons.tsx'
 import { Workbench, type WorkbenchActions } from './split-pane.tsx'
 import { isNarrowWidth, useViewportSize } from './breakpoints.ts'
 import { layoutPushSize } from './layout-push.ts'
+import { resolveCenterColumn } from './center-column.ts'
 import { parseDesktopEnv } from './desktop-env.ts'
 import { getWcoSnapshot, subscribeWco } from './wco.ts'
 import { getShellPreset } from './shell-presets.ts'
@@ -752,8 +753,10 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore }) {
     // (observed: a 1px sliver at the viewport's left edge).
     const locate = (): void => {
       if (disposed) return
-      const col = document.querySelector('#root [data-slot="conversation"]')
-        ?.parentElement as HTMLElement | undefined
+      // Hot path (#403): streaming output mutates #root at token cadence.
+      // Reuse a still-connected center column and only query after boot/HMR
+      // detached the cached node.
+      const col = resolveCenterColumn(centerColRef.current)
       if (col === undefined || !col.isConnected) {
         if (centerColRef.current !== null) {
           centerColRef.current.removeAttribute('data-dsh-center-col')
@@ -791,7 +794,7 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore }) {
       // Mid-drag every frame writes --dsh-sidebar-* on <html>'s style
       // attribute, which is the mutation this watcher observes — relocating
       // per drag frame is pointless (the center column node cannot change
-      // while the pointer is captured) and adds a querySelector to every
+      // while the pointer is captured) and adds locator work to every
       // frame's budget (#315). The 1.5s retry below still covers any node
       // swap that somehow lands mid-drag.
       if (draggingRef.current) return
@@ -818,8 +821,9 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore }) {
     // may end up byte-identical, and the col may be swapped before the
     // subtree watcher attaches). A slow unconditional re-locate makes the
     // panel converge on the real column within a couple of seconds no
-    // matter what sequence the shell used. locate() is cheap when nothing
-    // changed (one querySelector + an identity compare; no forced layout).
+    // matter what sequence the shell used. locate() is query-free while the
+    // cached column stays connected; only a detached/missing cache falls
+    // back to the document selector.
     const retry = window.setInterval(locate, 1500)
     return () => {
       disposed = true
