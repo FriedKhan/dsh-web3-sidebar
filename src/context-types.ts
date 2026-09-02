@@ -87,11 +87,12 @@ export interface SidebarSessionStore {
   get(id: string): {
     header: SidebarSessionHeader
     /**
-     * The live session's append-only event log (immutable snapshot; absent
-     * on sessions the runtime has not hydrated). Read-only access — the
-     * jobs.output route replays `job_output` tool/result rows from it.
+     * The live session's append-only event log as an immutable snapshot.
+     * Read-only access — the jobs.output route replays `job_output`
+     * tool/result rows from it. (The `Session.events` property this face
+     * mirrored was renamed to `snapshotEvents()` in DSH 0.1.2-alpha.4.)
      */
-    events?: readonly SidebarSessionEvent[]
+    snapshotEvents(): readonly SidebarSessionEvent[]
   } | undefined
 }
 

@@ -473,7 +473,7 @@ function buildApi(
       // log opens on a tool event (subagent seeds do) carries seq 0, which a
       // literal `> 0` comparison would drop, so the absent case floors at -1.
       const afterSeq = rawAfter ?? -1
-      let events: readonly SidebarSessionEvent[] | undefined = ctx.sessions.get(sessionId)?.events
+      let events: readonly SidebarSessionEvent[] | undefined = ctx.sessions.get(sessionId)?.snapshotEvents()
       if (events === undefined) {
         const persistence = ctx.get('sessionPersistence')
         if (persistence !== undefined) {
