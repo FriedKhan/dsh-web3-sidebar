@@ -1004,8 +1004,16 @@ body[data-dsh-sidebar-dragging] .bottomPanel {
 }
 
 /* The hover-revealed @-reference button at the row's far right (and the
-   transient "copied" label that replaces it after a copy). Hidden rows
-   keep the name at full width; hovering or focusing the row reveals it. */
+   transient "copied" label that replaces it after a copy). The only auto
+   margin in the row absorbs the filename's spare width, so a short name
+   cannot leave either affordance stranded in the middle. */
+.explorerRef,
+.explorerCopied {
+  margin-left: auto;
+}
+
+/* Hidden rows keep the name at full width; hovering or focusing the row
+   reveals the reference button. */
 .explorerRef {
   flex: none;
   display: none;
