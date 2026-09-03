@@ -518,8 +518,13 @@ function safeCall(fn: () => void): void {
  * Create one BetterSidebar service bound to a store. The service owns the
  * tab/viewer registries (Map + listener set) and proxies openTab/closeTab
  * to the store's reducer. One instance per client plugin activation.
+ *
+ * `isLocked` (the web3 login gate) short-circuits every `openTab`/`openFile`
+ * while the wallet is locked, so no derived flow — the + menu, a chat-link
+ * takeover, `sidebar_open`, an agent open, or an external plugin — can push
+ * tabs into the hidden workbench before the user unlocks.
  */
-export function createBetterSidebarService(store: SidebarStore): BetterSidebarService {
+export function createBetterSidebarService(store: SidebarStore, isLocked?: () => boolean): BetterSidebarService {
   const tabs = new Map<string, TabDescriptor>()
   const viewers = new Map<string, FileViewerDescriptor>()
   const listeners = new Set<() => void>()
@@ -601,6 +606,12 @@ export function createBetterSidebarService(store: SidebarStore): BetterSidebarSe
   }
 
   const openTab = (seed: OpenTabSeed, scope?: SessionScope): void => {
+    // The web3 login gate: while the wallet is locked the workbench is hidden
+    // behind the LoginView, so nothing may open into it — not the + menu, a
+    // chat-link takeover, a sidebar_open, an agent open, or an external
+    // plugin. Withhold every open until the user unlocks. (openFile routes
+    // through here too, so it is covered by this one guard.)
+    if (isLocked?.()) return
     // A type the user disabled in settings never opens — neither from the
     // + menu nor from derived flows (file opens, subagent auto-open,
     // external plugins). Already-open tabs keep rendering.

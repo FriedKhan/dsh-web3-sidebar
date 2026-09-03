@@ -1,0 +1,293 @@
+/*
+ * Web3 login gate styles. The shell is DSH-native — every surface, border and
+ * text colour is a `--dsw-alias-*` token, so light/dark track the product with
+ * no theme branch here. The web3 identity is a small set of component-local
+ * accent custom properties (Solana-family gradient); these are intentional
+ * brand accents scoped to the card, not palette values, so they stay fixed
+ * across themes. No literal product colours leak into layout.
+ */
+
+.gate {
+  --w3-a: #9945ff;
+  --w3-b: #14f195;
+  --w3-c: #19c2ff;
+  --w3-gradient: linear-gradient(135deg, var(--w3-a) 0%, var(--w3-c) 50%, var(--w3-b) 100%);
+
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px;
+  background: var(--dsw-alias-bg-base);
+}
+
+.card {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 380px;
+  padding: 26px 24px 24px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 16px;
+  background: var(--dsw-alias-bg-layer-1);
+  overflow: hidden;
+}
+
+/* The one branded flourish: a thin gradient strip across the card top. */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--w3-gradient);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: var(--w3-gradient);
+  color: #fff;
+  flex: none;
+}
+
+.brandTitle {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  background: var(--w3-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.heading {
+  margin: 16px 0 4px;
+  font-size: 17px;
+  font-weight: 650;
+  color: var(--dsw-alias-label-primary);
+}
+
+.subtitle {
+  margin: 0 0 18px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--dsw-alias-label-secondary);
+}
+
+/* ── Method chooser ───────────────────────────────────────────────────── */
+
+.methods {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.method {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 14px;
+  text-align: left;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 12px;
+  background: var(--dsw-alias-bg-layer-2);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+}
+
+.method:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+  border-color: var(--dsw-alias-border-l3);
+}
+
+.method:active { transform: translateY(1px); }
+
+.method:focus-visible {
+  outline: 2px solid var(--w3-a);
+  outline-offset: 1px;
+}
+
+/* Each method carries its own accent so the three read as distinct choices. */
+.iconBox {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  color: #fff;
+  flex: none;
+}
+
+.methodCreate .iconBox { background: linear-gradient(135deg, var(--w3-a), var(--w3-c)); }
+.methodImport .iconBox { background: linear-gradient(135deg, var(--w3-c), var(--w3-b)); }
+.methodConnect .iconBox { background: linear-gradient(135deg, #f7931a, var(--w3-a)); }
+
+.methodText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.methodTitle {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--dsw-alias-label-primary);
+}
+
+.methodDesc {
+  margin-top: 2px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.chevron {
+  margin-left: auto;
+  color: var(--dsw-alias-label-tertiary);
+  flex: none;
+}
+
+/* ── Sub-forms (create / import / connect / unlock) ───────────────────── */
+
+.field { margin-bottom: 12px; }
+
+.label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.input,
+.textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 9px 11px;
+  font-size: 13px;
+  color: var(--dsw-alias-label-primary);
+  background: var(--dsw-alias-bg-base);
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 9px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.textarea {
+  min-height: 84px;
+  resize: vertical;
+  font-family: var(--dsw-font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  line-height: 1.5;
+}
+
+.input:focus,
+.textarea:focus { border-color: var(--w3-a); }
+
+.input::placeholder,
+.textarea::placeholder { color: var(--dsw-alias-label-caption); }
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.primary {
+  flex: 1;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  background: var(--w3-gradient);
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+.primary:hover { opacity: 0.92; }
+.primary:active { transform: translateY(1px); }
+.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.ghost {
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dsw-alias-label-secondary);
+  background: transparent;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.ghost:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-primary);
+}
+
+.error {
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--dsw-alias-state-error);
+}
+
+.note {
+  margin-top: 14px;
+  padding: 10px 12px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--dsw-alias-label-tertiary);
+  background: var(--dsw-alias-bg-layer-2);
+  border-radius: 9px;
+}
+
+.addressPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding: 7px 11px;
+  font-size: 12px;
+  font-family: var(--dsw-font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  color: var(--dsw-alias-label-secondary);
+  background: var(--dsw-alias-bg-layer-2);
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 999px;
+}
+
+.linkRow {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.link {
+  font-size: 12px;
+  color: var(--w3-a);
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+}
+
+.link:hover { text-decoration: underline; }
+
+@media (prefers-reduced-motion: reduce) {
+  .method,
+  .primary,
+  .input,
+  .textarea { transition: none; }
+}

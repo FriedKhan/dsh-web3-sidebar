@@ -63,6 +63,8 @@ import { detectNewDirectSubagent } from './subagent-detect.ts'
 import { detectNewJob } from './subagent-jobs.ts'
 import { t } from './locales.ts'
 import { api, type SessionScope } from './api.ts'
+import { LoginView } from './LoginView.tsx'
+import { useWallet, type WalletStore } from './wallet.ts'
 import css from './sidebar.module.css'
 
 /** How many consecutive reconnect failures stop the agent-terminals push loop
@@ -179,8 +181,8 @@ function buildNewTabOptions(state: SidebarState, ctx: Context, scope: SessionSco
     }))
 }
 
-export function Sidebar(props: { ctx: Context; store: SidebarStore }) {
-  const { ctx, store } = props
+export function Sidebar(props: { ctx: Context; store: SidebarStore; wallet?: WalletStore }) {
+  const { ctx, store, wallet } = props
 
   // Copy freshness: re-render the whole tree when the DSH locale switches.
   // The module-level t() reads the active locale at call time, so a root
@@ -298,6 +300,13 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore }) {
     useCallback(() => store.getSnapshot(), [store]),
   )
   useEffect(() => { store.setSession(current) }, [current, store])
+
+  // Web3 login gate: while the wallet is locked, the right panel shows the
+  // LoginView instead of the workbench (and the bottom panel + floats are
+  // withheld). An absent wallet store reads as unlocked, so test/standalone
+  // compositions render the workbench exactly as before.
+  const walletSnapshot = useWallet(wallet)
+  const walletLocked = walletSnapshot.status === 'locked'
 
   const state = snapshot.state
   const sessionId = snapshot.sessionId
@@ -1614,16 +1623,20 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore }) {
             />
           )}
         <div className={css.panelBody}>
-          <Workbench
-            state={state}
-            tree={augmentedTree}
-            newTabOptions={newTabOptions}
-            actions={wrappedActions}
-            onNewTab={onNewTab}
-            renderTab={renderTab}
-            getTabIcon={tabIconOf}
-            getTabBadge={tabBadgeOf}
-          />
+          {walletLocked && wallet !== undefined ? (
+            <LoginView wallet={wallet} />
+          ) : (
+            <Workbench
+              state={state}
+              tree={augmentedTree}
+              newTabOptions={newTabOptions}
+              actions={wrappedActions}
+              onNewTab={onNewTab}
+              renderTab={renderTab}
+              getTabIcon={tabIconOf}
+              getTabBadge={tabBadgeOf}
+            />
+          )}
         </div>
         {/*
           The shared corner (only while BOTH panels are open): the
@@ -1692,8 +1705,8 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore }) {
           overflow content) would flash full-width for a frame until the
           first measurement lands. Rendering stays unconditional so the
           mount/render chain (auto-terminal etc.) is never gated on
-          geometry. */}
-      {!narrow && (
+          geometry. The locked login gate withholds the second workbench too. */}
+      {!narrow && !walletLocked && (
       <div
         ref={bottomRef}
         className={clsx(css.bottomPanel, !state.bottomOpen && css.bottomPanelHidden)}
@@ -1790,7 +1803,7 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore }) {
         collapse. The floats array's order is the stacking order; the content
         reuses the regular tab renderer, so every tab type floats unchanged.
       */}
-      {state.floats.map(float => (
+      {!walletLocked && state.floats.map(float => (
         <FreeWindow
           key={float.id}
           float={float}
