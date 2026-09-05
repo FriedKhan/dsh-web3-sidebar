@@ -12,7 +12,7 @@ import css from './LoginView.module.css'
 import { t } from './locales.ts'
 import { shortAddress, useWallet, type WalletStore } from './wallet.ts'
 
-type Mode = 'choose' | 'create' | 'import' | 'connect' | 'unlock'
+type Mode = 'auto' | 'choose' | 'create' | 'import' | 'connect' | 'unlock'
 
 const MIN_PASSWORD = 8
 
@@ -83,7 +83,9 @@ function MethodRow({ variant, icon, title, desc, onClick }: MethodRowProps): Rea
 /** The gate. `wallet` is the store; unlocking it makes Sidebar reveal the workbench. */
 export function LoginView({ wallet }: { wallet: WalletStore }): ReactNode {
   const snap = useWallet(wallet)
-  const [mode, setMode] = useState<Mode>(snap.hasWallet ? 'unlock' : 'choose')
+  // 'auto' resolves to Unlock when a wallet already exists, else the chooser —
+  // re-resolving after the host status loads (or after "use a different wallet").
+  const [mode, setMode] = useState<Mode>('auto')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [secret, setSecret] = useState('')
@@ -128,7 +130,7 @@ export function LoginView({ wallet }: { wallet: WalletStore }): ReactNode {
     })
   }
 
-  const onForget = (): void => { wallet.forget(); goto('choose') }
+  const onForget = (): void => { void run(async () => { await wallet.forget(); setMode('auto') }) }
 
   const brand = (
     <div className={css.brand}>
@@ -137,8 +139,17 @@ export function LoginView({ wallet }: { wallet: WalletStore }): ReactNode {
     </div>
   )
 
+  const screen = mode === 'auto' ? (snap.hasWallet ? 'unlock' : 'choose') : mode
+
   let body: ReactNode
-  if (mode === 'unlock') {
+  if (snap.status === 'loading') {
+    body = (
+      <>
+        {brand}
+        <h2 className={css.heading}>{t('w3Loading')}</h2>
+      </>
+    )
+  } else if (screen === 'unlock') {
     body = (
       <>
         {brand}
@@ -167,7 +178,7 @@ export function LoginView({ wallet }: { wallet: WalletStore }): ReactNode {
         </div>
       </>
     )
-  } else if (mode === 'choose') {
+  } else if (screen === 'choose') {
     body = (
       <>
         {brand}
@@ -180,7 +191,7 @@ export function LoginView({ wallet }: { wallet: WalletStore }): ReactNode {
         </div>
       </>
     )
-  } else if (mode === 'create') {
+  } else if (screen === 'create') {
     body = (
       <>
         {brand}
@@ -210,7 +221,7 @@ export function LoginView({ wallet }: { wallet: WalletStore }): ReactNode {
         <div className={css.note}>{t('w3CreateNote')}</div>
       </>
     )
-  } else if (mode === 'import') {
+  } else if (screen === 'import') {
     body = (
       <>
         {brand}

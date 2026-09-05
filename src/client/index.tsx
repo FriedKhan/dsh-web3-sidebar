@@ -17,6 +17,7 @@ import { revalidateChunksOnReactivate, setChunkModuleSystem } from './chunk-load
 import { registerBuiltins } from './builtins/index.ts'
 import { Sidebar } from './Sidebar.tsx'
 import { createWalletStore } from './wallet.ts'
+import { WalletView, WalletTabIcon } from './WalletView.tsx'
 import { RenderBoundary } from './RenderBoundary.tsx'
 import { registerOpenPathInterception, registerTurnTailInterception } from './intercept.tsx'
 import { registerLinkInterception } from './link-intercept.ts'
@@ -167,6 +168,20 @@ export function apply(ctx: Context): void {
   ctx.effect(
     () => registerBuiltins(ctx, service, { terminalTitle: () => terminalTitle }),
     'dsh-better-sidebar: register built-in tabs and viewers',
+  )
+  // The web3 Wallet tab (the login gate's counterpart inside the workbench):
+  // the unlocked wallet's address, balance, receive and send. It closes over
+  // the wallet store, so it never needs a session scope.
+  ctx.effect(
+    () => service.registerTab({
+      id: 'wallet',
+      title: () => t('walletTab'),
+      icon: (size: number) => createElement(WalletTabIcon, { size }),
+      order: 5,
+      single: true,
+      component: (props) => createElement(WalletView, { wallet: walletStore, visible: props.visible }),
+    }),
+    'dsh-web3-sidebar: register wallet tab',
   )
   // A failure anywhere in the client lifecycle must never take the app down
   // silently: log with the plugin prefix and pin a visible diagnostic strip

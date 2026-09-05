@@ -55,6 +55,7 @@ import { buildJobsApi, type SidebarJobsRoutes } from './jobs-routes.ts'
 import { buildSubagentLiveApi, type SidebarSubagentLiveRoutes } from './subagent-live-route.ts'
 import { buildSidechatApi } from './sidechat-routes.ts'
 import { readJsonBody, requireString, SidebarError, writeError, writeJson, writeOk } from './wire.ts'
+import { createWalletHost, WalletError } from './wallet-host.ts'
 
 export { Config }
 export type { SidebarConfig, ResolvedSidebarConfig }
@@ -291,6 +292,39 @@ function parseLoopbackAllowlist(allowlist: string): (host: string, port: string)
   }
 }
 
+/** Wrap a wallet route so a WalletError becomes the wire envelope: a wrong
+ *  password is `wallet-bad-password` (the client branches on it); every other
+ *  wallet failure is `wallet-error` with a descriptive message. */
+function walletRoute(handler: (payload: unknown) => Promise<unknown> | unknown): ApiMethod {
+  return async (payload) => {
+    try {
+      return await handler(payload)
+    } catch (error) {
+      if (error instanceof WalletError) {
+        if (error.code === 'bad-password') throw new SidebarError('wallet-bad-password', error.message, 401)
+        const status = error.code === 'no-wallet' ? 404 : error.code === 'locked' ? 409 : 400
+        throw new SidebarError('wallet-error', error.message, status)
+      }
+      throw error
+    }
+  }
+}
+
+/** Optional trimmed `label` from a wallet payload. */
+function optLabel(payload: unknown): string | undefined {
+  const value = (payload as { label?: unknown } | null)?.label
+  return typeof value === 'string' && value.trim() !== '' ? value.trim() : undefined
+}
+
+/** Required positive `amountSol` from a wallet.send payload. */
+function requireAmount(payload: unknown): number {
+  const value = (payload as { amountSol?: unknown } | null)?.amountSol
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
+    throw new SidebarError('bad-request', 'missing or invalid "amountSol"')
+  }
+  return value
+}
+
 function buildApi(
   ctx: Context,
   ptyManager: PtyManager | null,
@@ -323,6 +357,9 @@ function buildApi(
   // `subagents.history` calls. The route degrades to a 503 when the host
   // subagent runtime is absent (the page has no topology to show anyway).
   const subagentLiveApi: SidebarSubagentLiveRoutes = buildSubagentLiveApi(ctx)
+  // The web3 wallet: the HOST authority behind the login gate (keystore under
+  // $DSH_HOME/wallets/, the secret held in memory only while unlocked).
+  const walletHost = createWalletHost(resolved.walletRpcUrl)
   return {
     'session.cwd': async (payload) => {
       const { sessionId, cwd } = await cwdOf(payload)
@@ -536,6 +573,18 @@ function buildApi(
     // "Terminal N" label; the shell itself is configured through
     // `cordis.patch.yml` (`config.shell`) or resolved by the host default.
     'shell.get': () => ({ shell: terminalShell, name: shellDisplayName(terminalShell) }),
+    // The web3 wallet routes (the login gate's host authority). Not session-
+    // scoped: the wallet is per-DSH-home, not per-conversation. The plaintext
+    // secret never crosses this boundary — only the address, status, balance,
+    // and a transfer signature do.
+    'wallet.status': walletRoute(() => walletHost.status()),
+    'wallet.create': walletRoute((payload) => walletHost.create(requireString(payload, 'password'), optLabel(payload))),
+    'wallet.import': walletRoute((payload) => walletHost.importWallet(requireString(payload, 'secret'), requireString(payload, 'password'), optLabel(payload))),
+    'wallet.unlock': walletRoute((payload) => walletHost.unlock(requireString(payload, 'password'))),
+    'wallet.lock': walletRoute(() => { walletHost.lock(); return { ok: true } }),
+    'wallet.forget': walletRoute(async () => { await walletHost.forget(); return { ok: true } }),
+    'wallet.balance': walletRoute(() => walletHost.balance()),
+    'wallet.send': walletRoute((payload) => walletHost.send(requireString(payload, 'to'), requireAmount(payload))),
     // The side card preferences. The settings service is optional in the
     // composition; while absent the routes report undefined and the client
     // keeps the schema defaults. Writes are revision-guarded: a stale editor

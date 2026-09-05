@@ -216,6 +216,16 @@ function gitPayload(scope: SessionScope, worktree: string | undefined, extra: Re
   return scopePayload(scope, { ...(worktree !== undefined && worktree !== '' ? { worktree } : {}), ...extra })
 }
 
+/** How the active wallet was established (host: created/imported; the
+ *  client-only external path is `connected`). */
+export type WalletMethod = 'created' | 'imported' | 'connected'
+/** Public wallet metadata from the host (never carries the secret key). */
+export interface WalletMetaWire { address: string; method: 'created' | 'imported'; label?: string; createdAt: number }
+/** The host wallet status behind the login gate. */
+export interface WalletStatusWire { hasWallet: boolean; unlocked: boolean; address?: string; method?: 'created' | 'imported'; label?: string }
+/** A lamports / SOL balance. */
+export interface WalletBalanceWire { lamports: number; sol: number }
+
 /** The sidebar API surface (session scope threaded through every call). */
 export const api = {
   sessionCwd: (scope: SessionScope, signal?: AbortSignal) =>
@@ -356,6 +366,25 @@ export const api = {
    *  the platform opener (argv, no shell). */
   openExternal: (payload: { action: 'reveal'; path: string } | { action: 'url'; url: string }) =>
     call<{ started: boolean }>('open.external', payload),
+  // ── Wallet (the login gate's host authority; per-DSH-home, not session-scoped) ──
+  /** Current host wallet status (exists? unlocked? which address/method). */
+  walletStatus: () => call<WalletStatusWire>('wallet.status', {}),
+  /** Generate a new keypair, encrypt it under `password`, and unlock. */
+  walletCreate: (password: string, label?: string) =>
+    call<WalletMetaWire>('wallet.create', { password, ...(label !== undefined && label !== '' ? { label } : {}) }),
+  /** Import from a secret key / seed phrase, encrypt under `password`, unlock. */
+  walletImport: (secret: string, password: string, label?: string) =>
+    call<WalletMetaWire>('wallet.import', { secret, password, ...(label !== undefined && label !== '' ? { label } : {}) }),
+  /** Decrypt the stored keystore with `password` (fails closed on a wrong one). */
+  walletUnlock: (password: string) => call<WalletMetaWire>('wallet.unlock', { password }),
+  /** Drop the in-memory secret (re-lock without forgetting the keystore). */
+  walletLock: () => call<{ ok: true }>('wallet.lock', {}),
+  /** Delete the active keystore entirely. */
+  walletForget: () => call<{ ok: true }>('wallet.forget', {}),
+  /** The active wallet's on-chain balance (lamports + SOL). */
+  walletBalance: (signal?: AbortSignal) => call<WalletBalanceWire>('wallet.balance', {}, signal),
+  /** Sign and broadcast a SOL transfer from the unlocked wallet. */
+  walletSend: (to: string, amountSol: number) => call<{ signature: string }>('wallet.send', { to, amountSol }),
 }
 
 /** Absolute URL of the media route for one path (images only). */

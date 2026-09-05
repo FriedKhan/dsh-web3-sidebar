@@ -36,6 +36,9 @@ export {
   type SidebarPrefs,
 } from './prefs-shared.ts'
 
+/** Default Solana RPC endpoint (devnet — the demo wallet stays off mainnet). */
+const DEVNET_RPC = 'https://api.devnet.solana.com'
+
 /** Tunable sidebar host limits (every field optional; defaults fill in). */
 export interface SidebarConfig {
   /** Read cap of one text file (bytes); larger files return truncated. */
@@ -66,6 +69,11 @@ export interface SidebarConfig {
    * the existing default behavior is kept.
    */
   shellArgs?: string[]
+  /**
+   * Solana JSON-RPC endpoint the wallet uses for balance and transfers.
+   * Defaults to devnet so the demo wallet never touches mainnet value.
+   */
+  walletRpcUrl?: string
 }
 
 /** Schemastery schema for the plugin configuration. */
@@ -78,6 +86,7 @@ export const Config: z<SidebarConfig> = z.object({
   reconnectGraceMs: z.number().step(1).min(0).default(30_000),
   shell: z.string().default(''),
   shellArgs: z.array(z.string()).default([]),
+  walletRpcUrl: z.string().default(DEVNET_RPC),
 })
 
 /** Fully defaulted sidebar host settings. */
@@ -92,6 +101,8 @@ export interface ResolvedSidebarConfig {
   shell: string
   /** Explicit shell arguments; empty means use the platform defaults. */
   shellArgs: string[]
+  /** Solana JSON-RPC endpoint for wallet balance/transfers. */
+  walletRpcUrl: string
 }
 
 /**
@@ -110,6 +121,7 @@ export function resolveSidebarConfig(config: SidebarConfig | undefined): Resolve
     reconnectGraceMs: config?.reconnectGraceMs ?? 30_000,
     shell: config?.shell?.trim() ?? '',
     shellArgs: config?.shellArgs ?? [],
+    walletRpcUrl: config?.walletRpcUrl?.trim() || DEVNET_RPC,
   }
 }
 

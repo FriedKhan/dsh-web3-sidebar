@@ -22,6 +22,8 @@ export type SidebarErrorCode =
   | 'subagents-unavailable'
   | 'settings-rejected'
   | 'settings-conflict'
+  | 'wallet-error'
+  | 'wallet-bad-password'
   | 'internal'
 
 /** One API failure with its wire code and HTTP status. */

@@ -301,12 +301,14 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore; wallet?: Wal
   )
   useEffect(() => { store.setSession(current) }, [current, store])
 
-  // Web3 login gate: while the wallet is locked, the right panel shows the
-  // LoginView instead of the workbench (and the bottom panel + floats are
-  // withheld). An absent wallet store reads as unlocked, so test/standalone
-  // compositions render the workbench exactly as before.
+  // Web3 login gate: while the wallet is not unlocked, the right panel shows
+  // the LoginView instead of the workbench (and the bottom panel + floats are
+  // withheld). Anything but a confirmed unlock — including the brief `loading`
+  // window while the host status is read — keeps the gate closed, so the
+  // workbench never flashes before authentication resolves. An absent wallet
+  // store reads as unlocked, so test/standalone compositions render as before.
   const walletSnapshot = useWallet(wallet)
-  const walletLocked = walletSnapshot.status === 'locked'
+  const walletLocked = walletSnapshot.status !== 'unlocked'
 
   const state = snapshot.state
   const sessionId = snapshot.sessionId
