@@ -11,14 +11,33 @@
 
   box-sizing: border-box;
   width: 100%;
-  height: 100%;
-  overflow: auto;
+  /* Fill the pane as a flex child (matching the built-in views) and scroll
+     internally — NOT height:100%, which as a flex item with min-height:auto
+     grows past the pane's overflow:hidden and clips the bottom instead of
+     scrolling. */
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 14px;
   display: flex;
   flex-direction: column;
   gap: 12px;
   background: var(--dsw-alias-bg-base);
+  scrollbar-width: thin;
+  scrollbar-color: var(--dsw-alias-scrollbar-bg-l2) transparent;
 }
+/* Keep every card at its natural height — flex children default to shrinking,
+   which was compressing the tabs so their bottoms were unreadable. */
+.wallet > * { flex: none; }
+.wallet::-webkit-scrollbar { width: 10px; }
+.wallet::-webkit-scrollbar-thumb {
+  background: var(--dsw-alias-scrollbar-bg-l2);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+.wallet::-webkit-scrollbar-thumb:hover { background: var(--dsw-alias-scrollbar-hover-l2); }
 
 .card {
   position: relative;

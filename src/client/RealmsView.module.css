@@ -18,14 +18,31 @@
 
   box-sizing: border-box;
   width: 100%;
-  height: 100%;
-  overflow: auto;
+  /* Fill the pane as a flex child and scroll internally (see WalletView) —
+     height:100% would overflow the pane's clip and cut off the bottom. */
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 14px;
   display: flex;
   flex-direction: column;
   gap: 10px;
   background: var(--dsw-alias-bg-base);
+  scrollbar-width: thin;
+  scrollbar-color: var(--dsw-alias-scrollbar-bg-l2) transparent;
 }
+/* Direct children keep their natural height; only the column scrolls.
+   (.previewNote keeps margin-top:auto so it still sits at the bottom.) */
+.realms > * { flex: none; }
+.realms::-webkit-scrollbar { width: 10px; }
+.realms::-webkit-scrollbar-thumb {
+  background: var(--dsw-alias-scrollbar-bg-l2);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+.realms::-webkit-scrollbar-thumb:hover { background: var(--dsw-alias-scrollbar-hover-l2); }
 
 /* ── Headers ───────────────────────────────────────────────────────────── */
 
