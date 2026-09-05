@@ -524,4 +524,7 @@ export const ja: Record<string, string> = {
   kanbanClaimNoWallet: 'Unlock a wallet first',
   kanbanAdd: 'Add card',
   kanbanNewCard: 'Card title, Enter to add',
+  w3OverlapOn: 'Overlap mode: on (click to turn off)',
+  w3OverlapOff: 'Overlap mode: off (click to turn on)',
+  w3BringForward: 'Bring sidebar forward',
 }

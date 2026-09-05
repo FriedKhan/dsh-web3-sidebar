@@ -111,3 +111,21 @@ body[data-dsh-sidebar-dragging] #root [data-dsh-center-col],
     transition: none;
   }
 }
+
+/* ── Hybrid overlap mode ──────────────────────────────────────────────────
+   The panel floats over the conversation (the layout push is already released
+   to 0 by the Sidebar shell in this mode). `front` selects which surface is on
+   top by swapping the panel host's stacking against #root:
+   - front=panel  → the panel host keeps its z-index 25, painting over #root.
+   - front=center → the panel host drops behind #root, so the conversation
+     covers it and receives the clicks; a portaled reclaim tab (z-index far
+     above everything) brings the panel forward again.
+   #root gets an explicit stacking context so the negative-z host lands behind
+   it deterministically. */
+body[data-dsh-w3-overlap][data-dsh-w3-front="center"] #root {
+  position: relative;
+  z-index: 0;
+}
+body[data-dsh-w3-overlap][data-dsh-w3-front="center"] [data-dsh-panel-host] {
+  z-index: -1;
+}

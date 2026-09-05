@@ -30,6 +30,7 @@
  */
 import { createElement, memo, useCallback, useEffect, useMemo, useRef, useState, type DragEvent as ReactDragEvent, type ReactNode } from 'react'
 import { useSyncExternalStore } from 'react'
+import { createPortal } from 'react-dom'
 import clsx from 'clsx'
 import { IconCloseFill14, Tooltip } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { Context, SidebarSessionList } from '../context-types.ts'
@@ -309,6 +310,48 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore; wallet?: Wal
   // store reads as unlocked, so test/standalone compositions render as before.
   const walletSnapshot = useWallet(wallet)
   const walletLocked = walletSnapshot.status !== 'unlocked'
+
+  // ── Hybrid overlap mode ────────────────────────────────────────────────
+  // Instead of pushing the conversation aside, the panel FLOATS over it (no
+  // shared divider). `front` is which surface is on top: clicking the panel
+  // raises it over the center; clicking the center raises the center over the
+  // panel (the panel host drops behind #root), with a reclaim tab to bring the
+  // panel forward again. Toggleable; the choice persists per device.
+  const [overlap, setOverlap] = useState<boolean>(() => {
+    try { return localStorage.getItem('dsh-web3-overlap') !== '0' } catch { return true }
+  })
+  const [front, setFront] = useState<'panel' | 'center'>('panel')
+  useEffect(() => {
+    try { localStorage.setItem('dsh-web3-overlap', overlap ? '1' : '0') } catch { /* storage unavailable */ }
+  }, [overlap])
+  const overlapRef = useRef(overlap)
+  overlapRef.current = overlap && !narrow
+  // Reflect the mode on <body> so layout.css swaps the stacking order and
+  // releases the layout push.
+  useEffect(() => {
+    const b = document.body
+    if (overlap && !narrow) b.setAttribute('data-dsh-w3-overlap', '')
+    else b.removeAttribute('data-dsh-w3-overlap')
+    b.setAttribute('data-dsh-w3-front', front)
+    return () => { b.removeAttribute('data-dsh-w3-overlap'); b.removeAttribute('data-dsh-w3-front') }
+  }, [overlap, narrow, front])
+  // Raise whichever surface the pointer lands on: inside the panel host → the
+  // panel comes forward; anywhere else (the conversation) → the center does.
+  useEffect(() => {
+    if (!overlap || narrow) return
+    const onDown = (event: PointerEvent): void => {
+      const target = event.target
+      if (!(target instanceof Element)) return
+      // Clicking the panel (or the reclaim tab) raises the panel.
+      if (target.closest('[data-dsh-panel-host],[data-dsh-w3-reclaim]') !== null) { setFront('panel'); return }
+      // ONLY the conversation column raises the center. Other chrome (the left
+      // nav, the top bar) leaves the current front unchanged — so the sidebar
+      // is not hidden by an unrelated click.
+      if (target.closest('[data-dsh-center-col],[data-pane="conversation"],[data-slot="conversation"]') !== null) setFront('center')
+    }
+    document.addEventListener('pointerdown', onDown, true)
+    return () => document.removeEventListener('pointerdown', onDown, true)
+  }, [overlap, narrow])
 
   const state = snapshot.state
   const sessionId = snapshot.sessionId
@@ -1046,7 +1089,9 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore; wallet?: Wal
     // persisted width preference here squeezed #root mid-drag, dropped the
     // host viewport across its 1024px auto-collapse breakpoint, and the
     // native left sidebar snapped to its 56px rail (and back on release).
-    const pushWidth = !narrow && state?.panelOpen === true ? Math.min(width, window.innerWidth) : 0
+    // Overlap mode releases the horizontal push (the panel floats over the
+    // center instead of squeezing it); the bottom push is unaffected.
+    const pushWidth = overlapRef.current ? 0 : (!narrow && state?.panelOpen === true ? Math.min(width, window.innerWidth) : 0)
     writeGeometry(pushWidth, bottomPush)
   }
 
@@ -1211,8 +1256,10 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore; wallet?: Wal
     const bottomPush = !narrow && snapshot.state?.bottomOpen === true
       ? height + keyboardInset
       : 0
-    writeGeometry(width, bottomPush)
-  }, [narrow, snapshot.state?.panelOpen, snapshot.state?.width, snapshot.state?.bottomOpen, snapshot.state?.bottomHeight, viewport.width, layoutViewportHeight, keyboardInset])
+    // Overlap mode floats the panel over the center, so the horizontal push
+    // is released (width 0); the bottom push is unchanged.
+    writeGeometry(overlap && !narrow ? 0 : width, bottomPush)
+  }, [overlap, narrow, snapshot.state?.panelOpen, snapshot.state?.width, snapshot.state?.bottomOpen, snapshot.state?.bottomHeight, viewport.width, layoutViewportHeight, keyboardInset])
   // Unmount must release the push (issue #31): when the boundary swaps the
   // whole sidebar after a render crash (or the plugin fiber is disposed /
   // HMR), the CSS variables would otherwise stay on <html> and layout.css
@@ -1553,6 +1600,22 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore; wallet?: Wal
             </button>
           </Tooltip>
         )}
+        {!narrow && (
+          <Tooltip label={overlap ? t('w3OverlapOn') : t('w3OverlapOff')} side="bottom" delayMs={500}>
+            <button
+              type="button"
+              className={clsx(css.toggleButton, overlap && css.toggleButtonActive)}
+              aria-label={overlap ? t('w3OverlapOn') : t('w3OverlapOff')}
+              aria-pressed={overlap}
+              onClick={() => { setOverlap(v => !v); setFront('panel') }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="3" y="3" width="13" height="13" rx="2" />
+                <path d="M9 9h11a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2V9Z" fill="currentColor" fillOpacity="0.14" />
+              </svg>
+            </button>
+          </Tooltip>
+        )}
         <Tooltip label={state.panelOpen ? t('collapse') : t('expand')} side="bottom" delayMs={500}>
           <button
             type="button"
@@ -1564,6 +1627,25 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore; wallet?: Wal
           </button>
         </Tooltip>
       </div>
+      {/*
+        Overlap-mode reclaim tab: when the center is on top (the panel receded
+        behind #root), a slim always-on-top grab handle on the right edge
+        brings the panel forward again. Portaled to <body> so it escapes the
+        panel host's (lowered) stacking context.
+      */}
+      {overlap && !narrow && front === 'center' && state.panelOpen && createPortal(
+        <button
+          type="button"
+          className={css.overlapReclaim}
+          data-dsh-w3-reclaim
+          aria-label={t('w3BringForward')}
+          title={t('w3BringForward')}
+          onPointerDown={(e) => { e.stopPropagation(); setFront('panel') }}
+        >
+          <IconPanelRightOutline16 />
+        </button>,
+        document.body,
+      )}
       {/*
         The right panel stays mounted while collapsed (hidden off-screen) so
         the slide in/out can animate; visibility hides it after the slide

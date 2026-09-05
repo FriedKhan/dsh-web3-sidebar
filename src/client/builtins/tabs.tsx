@@ -60,6 +60,9 @@ export const TERMINAL_LIMIT = 3
 export interface BuiltinTabOptions {
   /** Returns the display title for newly opened terminal tabs. */
   terminalTitle?: () => string
+  /** Built-in tab ids to omit, so a fork can replace one (e.g. the web3 fork
+   *  registers its Kanban board as the 'subagent' Tasks tab). */
+  excludeTabs?: readonly string[]
 }
 
 /** A client-side uuid for terminal tab identity (not shown in the UI). */

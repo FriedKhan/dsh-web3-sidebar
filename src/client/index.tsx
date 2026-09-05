@@ -172,7 +172,9 @@ export function apply(ctx: Context): void {
   // service (eating our own dogfood). The disposer unregisters them on
   // fiber disposal (HMR-safe).
   ctx.effect(
-    () => registerBuiltins(ctx, service, { terminalTitle: () => terminalTitle }),
+    // Exclude the built-in 'subagent' (Tasks) tab so the web3 Kanban board can
+    // take that id below without a duplicate-registration crash.
+    () => registerBuiltins(ctx, service, { terminalTitle: () => terminalTitle, excludeTabs: ['subagent'] }),
     'dsh-better-sidebar: register built-in tabs and viewers',
   )
   // The web3 Wallet tab (the login gate's counterpart inside the workbench):
@@ -202,17 +204,21 @@ export function apply(ctx: Context): void {
     }),
     'dsh-web3-sidebar: register realms tab',
   )
-  // The Kanban Board tab (the co-op task/bounty board; feeds governance stats).
+  // The Kanban board IS the Tasks tab: register with id 'subagent' (the
+  // built-in Tasks tab) so it overrides that descriptor in the registry —
+  // opening "Tasks" now shows the co-op task/bounty board. registerBuiltins
+  // runs before this effect, so this set() wins. (The board is also the
+  // contribution data source the governance graphs read.)
   ctx.effect(
     () => service.registerTab({
-      id: 'board',
-      title: () => t('kanbanTab'),
+      id: 'subagent',
+      title: () => t('subagent'),
       icon: (size: number) => createElement(KanbanTabIcon, { size }),
-      order: 7,
+      order: 30,
       single: true,
       component: () => createElement(KanbanView, { store: kanbanStore, wallet: walletStore }),
     }),
-    'dsh-web3-sidebar: register kanban board tab',
+    'dsh-web3-sidebar: override Tasks tab with the kanban board',
   )
   // A failure anywhere in the client lifecycle must never take the app down
   // silently: log with the plugin prefix and pin a visible diagnostic strip

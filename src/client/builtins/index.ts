@@ -23,7 +23,9 @@ export function registerBuiltins(
   options: BuiltinTabOptions = {},
 ): () => void {
   const disposers: (() => void)[] = []
+  const exclude = new Set(options.excludeTabs ?? [])
   for (const tab of builtinTabs(ctx, options)) {
+    if (exclude.has(tab.id)) continue
     disposers.push(service.registerTab(tab))
   }
   for (const viewer of builtinViewers()) {

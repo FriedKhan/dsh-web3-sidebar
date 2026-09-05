@@ -131,6 +131,45 @@
   cursor: default;
 }
 
+/* Overlap-mode toggle, active state: tinted with the web3 accent. */
+.toggleButtonActive {
+  color: #9945ff;
+  background: color-mix(in srgb, #9945ff 14%, transparent);
+}
+.toggleButtonActive:hover:not(:disabled) {
+  background: color-mix(in srgb, #9945ff 22%, transparent);
+  color: #9945ff;
+}
+
+/* Overlap-mode reclaim tab: portaled to <body>, pinned to the right edge,
+   above everything, so the panel can be brought forward when the center is on
+   top. A slim vertical grab handle. */
+.overlapReclaim {
+  position: fixed;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  z-index: 2147482000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 64px;
+  padding: 0;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-right: none;
+  border-radius: 10px 0 0 10px;
+  background: var(--dsw-alias-bg-layer-1, #fff);
+  color: #9945ff;
+  cursor: pointer;
+  box-shadow: -4px 0 16px -6px rgba(0, 0, 0, .3);
+}
+.overlapReclaim:hover {
+  background: color-mix(in srgb, #9945ff 12%, var(--dsw-alias-bg-layer-1, #fff));
+  width: 26px;
+}
+.overlapReclaim:focus-visible { outline: 2px solid #9945ff; outline-offset: 2px; }
+
 .panel {
   box-sizing: border-box;
   position: absolute;
