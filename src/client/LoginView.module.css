@@ -242,7 +242,7 @@
 .error {
   margin-top: 12px;
   font-size: 12px;
-  color: var(--dsw-alias-state-error);
+  color: var(--dsw-alias-state-error-primary, #e5484d);
 }
 
 .note {

@@ -18,6 +18,7 @@ import { registerBuiltins } from './builtins/index.ts'
 import { Sidebar } from './Sidebar.tsx'
 import { createWalletStore } from './wallet.ts'
 import { WalletView, WalletTabIcon } from './WalletView.tsx'
+import { RealmsView, RealmsTabIcon } from './RealmsView.tsx'
 import { RenderBoundary } from './RenderBoundary.tsx'
 import { registerOpenPathInterception, registerTurnTailInterception } from './intercept.tsx'
 import { registerLinkInterception } from './link-intercept.ts'
@@ -182,6 +183,19 @@ export function apply(ctx: Context): void {
       component: (props) => createElement(WalletView, { wallet: walletStore, visible: props.visible }),
     }),
     'dsh-web3-sidebar: register wallet tab',
+  )
+  // The Realms/governance tab (Solana Realms): browse realms, proposals, vote.
+  // UI-first mocked data; closes over the wallet store for the voter identity.
+  ctx.effect(
+    () => service.registerTab({
+      id: 'realms',
+      title: () => t('realmsTab'),
+      icon: (size: number) => createElement(RealmsTabIcon, { size }),
+      order: 6,
+      single: true,
+      component: () => createElement(RealmsView, { wallet: walletStore }),
+    }),
+    'dsh-web3-sidebar: register realms tab',
   )
   // A failure anywhere in the client lifecycle must never take the app down
   // silently: log with the plugin prefix and pin a visible diagnostic strip

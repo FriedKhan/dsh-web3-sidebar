@@ -1,0 +1,225 @@
+/*
+ * Realms (governance) tab styles. DSH-native surfaces (--dsw-alias-* tokens,
+ * theme-adaptive) with a card-scoped Solana-family web3 accent, matching the
+ * login gate and Wallet tab. Vote yes/no use the theme's success/error state
+ * tokens so they read correctly in both themes.
+ */
+
+.realms {
+  --w3-a: #9945ff;
+  --w3-b: #14f195;
+  --w3-c: #19c2ff;
+  --w3-gradient: linear-gradient(135deg, var(--w3-a) 0%, var(--w3-c) 50%, var(--w3-b) 100%);
+  /* Yes/No use the theme's state tokens (the *-primary aliases the theme
+     actually defines) with a web3 fallback, so a theme missing them still
+     renders a visible colour rather than a transparent control. */
+  --w3-ok: var(--dsw-alias-state-success-primary, var(--w3-b));
+  --w3-err: var(--dsw-alias-state-error-primary, #e5484d);
+
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--dsw-alias-bg-base);
+}
+
+/* ── Headers ───────────────────────────────────────────────────────────── */
+
+.header { display: flex; align-items: center; gap: 12px; padding: 2px 2px 8px; }
+
+.headerMark {
+  display: grid; place-items: center;
+  width: 40px; height: 40px;
+  border-radius: 11px;
+  background: var(--w3-gradient);
+  color: #fff; flex: none;
+}
+
+.headerTitle { font-size: 15px; font-weight: 700; color: var(--dsw-alias-label-primary); }
+.headerSub {
+  margin-top: 2px; font-size: 11.5px;
+  font-family: var(--dsw-font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.backRow {
+  display: inline-flex; align-items: center; gap: 6px;
+  align-self: flex-start;
+  padding: 5px 4px;
+  font-size: 12.5px; font-weight: 500;
+  color: var(--dsw-alias-label-secondary);
+  background: none; border: none; cursor: pointer;
+}
+.backRow:hover { color: var(--dsw-alias-label-primary); }
+
+.realmHeader { display: flex; align-items: center; gap: 12px; padding: 2px 2px 6px; }
+.realmName { font-size: 14px; font-weight: 650; color: var(--dsw-alias-label-primary); }
+.realmMeta { font-size: 11.5px; color: var(--dsw-alias-label-tertiary); }
+
+.realmMark {
+  display: grid; place-items: center;
+  width: 38px; height: 38px; flex: none;
+  border-radius: 10px;
+  font-size: 13px; font-weight: 700; letter-spacing: 0.3px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--w3-a), var(--w3-c));
+}
+
+/* ── Lists / rows ──────────────────────────────────────────────────────── */
+
+.list { display: flex; flex-direction: column; gap: 8px; }
+
+.realmRow {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; padding: 12px;
+  text-align: left;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 12px;
+  background: var(--dsw-alias-bg-layer-1);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.realmRow:hover { background: var(--dsw-alias-interactive-bg-hover); border-color: var(--dsw-alias-border-l3); }
+.realmRow:focus-visible { outline: 2px solid var(--w3-a); outline-offset: 1px; }
+
+.realmRowText { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+
+.activePill {
+  padding: 2px 8px; flex: none;
+  font-size: 10.5px; font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, var(--w3-a), var(--w3-c));
+  border-radius: 999px;
+}
+
+.chevron { color: var(--dsw-alias-label-tertiary); flex: none; }
+
+.proposalRow {
+  display: flex; flex-direction: column; gap: 8px;
+  width: 100%; padding: 12px;
+  text-align: left;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 12px;
+  background: var(--dsw-alias-bg-layer-1);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.proposalRow:hover { background: var(--dsw-alias-interactive-bg-hover); border-color: var(--dsw-alias-border-l3); }
+.proposalRow:focus-visible { outline: 2px solid var(--w3-a); outline-offset: 1px; }
+
+.proposalTop { display: flex; align-items: center; gap: 8px; }
+.proposalTitle { font-size: 13px; font-weight: 550; line-height: 1.4; color: var(--dsw-alias-label-primary); }
+
+/* ── Status pills ──────────────────────────────────────────────────────── */
+
+.status {
+  padding: 2px 8px;
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.3px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+.status_voting { color: var(--w3-a); background: color-mix(in srgb, var(--w3-a) 14%, transparent); }
+.status_succeeded { color: var(--w3-ok); background: color-mix(in srgb, var(--w3-ok) 14%, transparent); }
+.status_defeated { color: var(--w3-err); background: color-mix(in srgb, var(--w3-err) 14%, transparent); }
+.status_executing { color: var(--w3-c); background: color-mix(in srgb, var(--w3-c) 14%, transparent); }
+
+.votedPill {
+  padding: 2px 8px;
+  font-size: 10px; font-weight: 600;
+  color: var(--dsw-alias-label-secondary);
+  background: var(--dsw-alias-bg-layer-2);
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 999px;
+}
+
+/* ── Vote bar ──────────────────────────────────────────────────────────── */
+
+.bar {
+  display: flex; height: 6px;
+  border-radius: 999px; overflow: hidden;
+  background: var(--dsw-alias-bg-layer-2);
+}
+.barYes { background: var(--w3-ok); }
+.barNo { background: var(--w3-err); }
+
+/* ── Proposal detail ───────────────────────────────────────────────────── */
+
+.card {
+  position: relative;
+  box-sizing: border-box;
+  padding: 16px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 14px;
+  background: var(--dsw-alias-bg-layer-1);
+  overflow: hidden;
+}
+.card::before {
+  content: ''; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--w3-gradient);
+}
+
+.detailHead { display: flex; align-items: center; justify-content: space-between; }
+.proposalId {
+  font-size: 11px;
+  font-family: var(--dsw-font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  color: var(--dsw-alias-label-tertiary);
+}
+.detailTitle { margin: 12px 0 8px; font-size: 15px; font-weight: 650; line-height: 1.4; color: var(--dsw-alias-label-primary); }
+.detailDesc { margin: 0 0 16px; font-size: 12.5px; line-height: 1.6; color: var(--dsw-alias-label-secondary); }
+
+.tallyRow { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12px; font-weight: 600; }
+.tallyYes { color: var(--w3-ok); }
+.tallyNo { color: var(--w3-err); }
+.quorum { margin-top: 10px; font-size: 11.5px; color: var(--dsw-alias-label-tertiary); }
+
+/* ── Vote controls ─────────────────────────────────────────────────────── */
+
+.voteLabel { font-size: 12px; color: var(--dsw-alias-label-secondary); margin-bottom: 10px; }
+.voteButtons { display: flex; gap: 8px; }
+
+.voteYes, .voteNo {
+  flex: 1; padding: 10px;
+  font-size: 13px; font-weight: 700;
+  color: #fff; border: none; border-radius: 10px; cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+/* Darken the semantic fills toward their -700 range so white label text
+   clears a legible contrast ratio (green/red-500 with white sits ~2.3:1,
+   below WCAG AA); the buttons stay clearly green/red. */
+.voteYes { background: color-mix(in srgb, var(--w3-ok) 74%, #06130b); }
+.voteNo { background: color-mix(in srgb, var(--w3-err) 80%, #180404); }
+.voteYes:hover, .voteNo:hover { opacity: 0.9; }
+.voteYes:active, .voteNo:active { transform: translateY(1px); }
+.voteYes:focus-visible, .voteNo:focus-visible { outline: 2px solid var(--dsw-alias-label-primary); outline-offset: 2px; }
+.backRow:focus-visible { outline: 2px solid var(--w3-a); outline-offset: 2px; border-radius: 4px; }
+
+.voted { font-size: 12.5px; color: var(--dsw-alias-label-primary); }
+
+.link {
+  margin-left: 8px;
+  font-size: 12px; color: var(--w3-a);
+  background: none; border: none; padding: 0; cursor: pointer;
+}
+.link:hover { text-decoration: underline; }
+
+.note {
+  font-size: 12px; line-height: 1.5;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.previewNote {
+  margin-top: auto;
+  padding: 9px 11px;
+  font-size: 11px; line-height: 1.5;
+  color: var(--dsw-alias-label-tertiary);
+  background: var(--dsw-alias-bg-layer-2);
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 10px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .realmRow, .proposalRow, .voteYes, .voteNo { transition: none; }
+}
