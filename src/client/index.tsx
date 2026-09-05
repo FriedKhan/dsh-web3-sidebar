@@ -19,6 +19,8 @@ import { Sidebar } from './Sidebar.tsx'
 import { createWalletStore } from './wallet.ts'
 import { WalletView, WalletTabIcon } from './WalletView.tsx'
 import { RealmsView, RealmsTabIcon } from './RealmsView.tsx'
+import { KanbanView, KanbanTabIcon } from './KanbanView.tsx'
+import { createKanbanStore } from './kanban-data.ts'
 import { RenderBoundary } from './RenderBoundary.tsx'
 import { registerOpenPathInterception, registerTurnTailInterception } from './intercept.tsx'
 import { registerLinkInterception } from './link-intercept.ts'
@@ -137,6 +139,9 @@ export function apply(ctx: Context): void {
   // The web3 login gate's wallet store (one per activation, like the sidebar
   // store). UI-first mock in M1; a Host-backed keystore swaps in behind it.
   const walletStore = createWalletStore()
+  // The Kanban board's task store (one per activation; persisted locally). It
+  // is the contribution data source the governance graphs will read.
+  const kanbanStore = createKanbanStore()
   // The sidebar registry service: external plugins register tab types and
   // file previewers through `ctx.betterSidebar.registerTab/registerFileViewer`.
   // Published before the panel mounts so consumers injecting 'betterSidebar'
@@ -196,6 +201,18 @@ export function apply(ctx: Context): void {
       component: () => createElement(RealmsView, { wallet: walletStore }),
     }),
     'dsh-web3-sidebar: register realms tab',
+  )
+  // The Kanban Board tab (the co-op task/bounty board; feeds governance stats).
+  ctx.effect(
+    () => service.registerTab({
+      id: 'board',
+      title: () => t('kanbanTab'),
+      icon: (size: number) => createElement(KanbanTabIcon, { size }),
+      order: 7,
+      single: true,
+      component: () => createElement(KanbanView, { store: kanbanStore, wallet: walletStore }),
+    }),
+    'dsh-web3-sidebar: register kanban board tab',
   )
   // A failure anywhere in the client lifecycle must never take the app down
   // silently: log with the plugin prefix and pin a visible diagnostic strip

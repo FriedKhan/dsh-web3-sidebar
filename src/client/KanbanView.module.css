@@ -1,0 +1,183 @@
+/*
+ * Kanban board styles. DSH-native surfaces (--dsw-alias-* tokens) with the
+ * Solana-family web3 accent. The board fills the pane as a flex child; the
+ * columns row scrolls horizontally and each column body scrolls vertically —
+ * so the board never clips (the lesson from the wallet overflow fix).
+ */
+.board {
+  --w3-a: #9945ff;
+  --w3-b: #14f195;
+  --w3-c: #19c2ff;
+  --w3-gradient: linear-gradient(135deg, var(--w3-a) 0%, var(--w3-c) 50%, var(--w3-b) 100%);
+  --w3-ok: var(--dsw-alias-state-success-primary, var(--w3-b));
+
+  box-sizing: border-box;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--dsw-alias-bg-base);
+}
+
+/* ── Header ────────────────────────────────────────────── */
+.boardHeader { flex: none; padding: 14px 14px 12px; border-bottom: 1px solid var(--dsw-alias-border-l2); }
+.boardTop { display: flex; align-items: center; gap: 12px; }
+.boardMark {
+  display: grid; place-items: center; width: 38px; height: 38px; flex: none;
+  border-radius: 10px; color: #fff; background: var(--w3-gradient);
+}
+.boardTitles { flex: 1; min-width: 0; }
+.boardTitle { font-size: 15px; font-weight: 700; color: var(--dsw-alias-label-primary); }
+.boardSub {
+  margin-top: 2px; font-size: 11.5px; color: var(--dsw-alias-label-tertiary);
+  font-family: var(--dsw-font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+}
+.boardStat { text-align: right; flex: none; }
+.boardStatNum { display: block; font-size: 18px; font-weight: 700; color: var(--dsw-alias-label-primary); }
+.boardStatLabel { font-size: 10.5px; color: var(--dsw-alias-label-tertiary); text-transform: uppercase; letter-spacing: .04em; }
+
+.progress { margin-top: 12px; height: 5px; border-radius: 999px; background: var(--dsw-alias-bg-layer-2); overflow: hidden; }
+.progressFill { height: 100%; background: var(--w3-gradient); border-radius: 999px; transition: width .3s ease; }
+
+/* ── Columns ───────────────────────────────────────────── */
+.columns {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--dsw-alias-scrollbar-bg-l2) transparent;
+}
+.columns::-webkit-scrollbar { height: 10px; }
+.columns::-webkit-scrollbar-thumb { background: var(--dsw-alias-scrollbar-bg-l2); border-radius: 999px; border: 3px solid transparent; background-clip: padding-box; }
+
+.column {
+  flex: none;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 12px;
+  background: var(--dsw-alias-bg-layer-1);
+  transition: border-color .15s ease, background .15s ease;
+}
+.columnOver { border-color: var(--w3-a); background: color-mix(in srgb, var(--w3-a) 6%, var(--dsw-alias-bg-layer-1)); }
+
+.columnHead {
+  flex: none; display: flex; align-items: center; gap: 8px;
+  padding: 10px 10px 8px;
+}
+.colDot { width: 8px; height: 8px; border-radius: 999px; flex: none; background: var(--dsw-alias-label-tertiary); }
+.dot_backlog { background: #94a3b8; }
+.dot_todo { background: var(--w3-c); }
+.dot_doing { background: var(--w3-a); }
+.dot_review { background: #f7931a; }
+.dot_done { background: var(--w3-ok); }
+.colName { flex: 1; min-width: 0; font-size: 12.5px; font-weight: 600; color: var(--dsw-alias-label-primary); }
+.colCount {
+  font-size: 11px; font-weight: 600; color: var(--dsw-alias-label-tertiary);
+  font-variant-numeric: tabular-nums; padding: 1px 7px; border-radius: 999px;
+  background: var(--dsw-alias-bg-layer-2);
+}
+.colAdd {
+  display: grid; place-items: center; width: 22px; height: 22px; flex: none;
+  color: var(--dsw-alias-label-tertiary); background: none; border: none; border-radius: 6px; cursor: pointer;
+}
+.colAdd:hover { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-label-primary); }
+
+.columnBody {
+  flex: 1; min-height: 0; overflow-y: auto;
+  padding: 4px 8px 10px; display: flex; flex-direction: column; gap: 8px;
+  scrollbar-width: thin; scrollbar-color: var(--dsw-alias-scrollbar-bg-l2) transparent;
+}
+.columnBody::-webkit-scrollbar { width: 8px; }
+.columnBody::-webkit-scrollbar-thumb { background: var(--dsw-alias-scrollbar-bg-l2); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
+
+/* ── Card ──────────────────────────────────────────────── */
+.card {
+  flex: none;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 9px;
+  background: var(--dsw-alias-bg-base);
+  padding: 9px 10px;
+  cursor: grab;
+  box-shadow: 0 1px 2px rgba(0,0,0,.04);
+}
+.card:active { cursor: grabbing; }
+
+.cardTitle {
+  display: block; width: 100%; text-align: left;
+  font-size: 12.5px; line-height: 1.4; color: var(--dsw-alias-label-primary);
+  background: none; border: none; padding: 0; cursor: text;
+  word-break: break-word;
+}
+.cardFoot { display: flex; align-items: center; gap: 6px; margin-top: 9px; }
+
+.weightChip {
+  font-size: 10.5px; font-weight: 600; color: var(--w3-a);
+  padding: 2px 7px; border-radius: 999px;
+  background: color-mix(in srgb, var(--w3-a) 12%, transparent);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.assignChip {
+  font-size: 10.5px; font-weight: 500; color: var(--dsw-alias-label-secondary);
+  padding: 2px 8px; border-radius: 999px; border: 1px dashed var(--dsw-alias-border-l3);
+  background: none; cursor: pointer;
+  font-family: var(--dsw-font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 96px;
+}
+.assignChip:hover { border-color: var(--w3-a); color: var(--dsw-alias-label-primary); }
+.assignChip:disabled { opacity: .5; cursor: default; }
+.assignMine { border-style: solid; border-color: var(--w3-a); color: var(--w3-a); }
+.del {
+  margin-left: auto; display: grid; place-items: center; width: 20px; height: 20px; flex: none;
+  color: var(--dsw-alias-label-tertiary); background: none; border: none; border-radius: 5px; cursor: pointer;
+}
+.del:hover { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-state-error-primary, #e5484d); }
+
+/* ── Add + edit ────────────────────────────────────────── */
+.addRow {
+  display: flex; align-items: center; gap: 6px; width: 100%;
+  padding: 8px 9px; font-size: 12px; color: var(--dsw-alias-label-tertiary);
+  background: none; border: 1px dashed var(--dsw-alias-border-l2); border-radius: 9px; cursor: pointer;
+}
+.addRow:hover { color: var(--dsw-alias-label-primary); border-color: var(--dsw-alias-border-l3); background: var(--dsw-alias-interactive-bg-hover); }
+.addBox { display: flex; }
+
+.editTitle {
+  box-sizing: border-box; width: 100%; resize: none;
+  font-size: 12.5px; line-height: 1.4; font-family: inherit;
+  color: var(--dsw-alias-label-primary); background: var(--dsw-alias-bg-base);
+  border: 1px solid var(--w3-a); border-radius: 8px; padding: 8px 9px; outline: none;
+}
+.editRow { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; gap: 8px; }
+.editWeight { font-size: 11px; color: var(--dsw-alias-label-tertiary); display: inline-flex; align-items: center; gap: 5px; }
+.editWeight input {
+  width: 52px; font-size: 12px; padding: 4px 6px; border-radius: 6px;
+  border: 1px solid var(--dsw-alias-border-l2); background: var(--dsw-alias-bg-base); color: var(--dsw-alias-label-primary);
+}
+.editActions { display: flex; gap: 6px; }
+.ghostSm, .primarySm {
+  font-size: 11.5px; font-weight: 600; padding: 5px 11px; border-radius: 7px; cursor: pointer; border: none;
+}
+.ghostSm { color: var(--dsw-alias-label-secondary); background: var(--dsw-alias-bg-layer-2); }
+.primarySm { color: #fff; background: var(--w3-gradient); }
+
+.previewNote {
+  flex: none; margin: 0 12px 12px;
+  padding: 8px 11px; font-size: 11px; line-height: 1.5;
+  color: var(--dsw-alias-label-tertiary);
+  background: var(--dsw-alias-bg-layer-2);
+  border: 1px solid var(--dsw-alias-border-l2); border-radius: 10px;
+}
+
+.card:focus-visible, .cardTitle:focus-visible, .assignChip:focus-visible,
+.colAdd:focus-visible, .addRow:focus-visible, .del:focus-visible {
+  outline: 2px solid var(--w3-a); outline-offset: 1px;
+}
+@media (prefers-reduced-motion: reduce) { .column, .progressFill { transition: none; } }
