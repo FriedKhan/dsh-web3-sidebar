@@ -584,7 +584,7 @@ function buildApi(
     'wallet.lock': walletRoute(() => { walletHost.lock(); return { ok: true } }),
     'wallet.forget': walletRoute(async () => { await walletHost.forget(); return { ok: true } }),
     'wallet.balance': walletRoute(() => walletHost.balance()),
-    'wallet.send': walletRoute((payload) => walletHost.send(requireString(payload, 'to'), requireAmount(payload))),
+    'wallet.send': walletRoute((payload) => walletHost.send(requireString(payload, 'to'), requireAmount(payload), requireString(payload, 'password'))),
     // The side card preferences. The settings service is optional in the
     // composition; while absent the routes report undefined and the client
     // keeps the schema defaults. Writes are revision-guarded: a stale editor

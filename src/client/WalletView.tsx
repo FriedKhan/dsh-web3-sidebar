@@ -33,6 +33,7 @@ export function WalletView({ wallet, visible }: { wallet: WalletStore; visible?:
   const [copied, setCopied] = useState(false)
   const [to, setTo] = useState('')
   const [amount, setAmount] = useState('')
+  const [sendPassword, setSendPassword] = useState('')
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState<string | null>(null)
   const [signature, setSignature] = useState<string | null>(null)
@@ -73,13 +74,17 @@ export function WalletView({ wallet, visible }: { wallet: WalletStore; visible?:
     setSending(true)
     setSendError(null)
     setSignature(null)
-    wallet.send(to.trim(), value)
-      .then(({ signature: sig }) => { setSignature(sig); setTo(''); setAmount(''); refreshBalance() })
-      .catch((error: unknown) => setSendError(error instanceof SidebarApiError ? error.message : String(error)))
+    wallet.send(to.trim(), value, sendPassword)
+      .then(({ signature: sig }) => { setSignature(sig); setTo(''); setAmount(''); setSendPassword(''); refreshBalance() })
+      .catch((error: unknown) => setSendError(
+        error instanceof SidebarApiError
+          ? (error.code === 'wallet-bad-password' ? t('w3ErrWrongPassword') : error.message)
+          : String(error),
+      ))
       .finally(() => setSending(false))
   }
 
-  const sendDisabled = sending || to.trim() === '' || !(Number(amount) > 0)
+  const sendDisabled = sending || to.trim() === '' || !(Number(amount) > 0) || sendPassword === ''
 
   return (
     <div className={css.wallet}>
@@ -142,6 +147,12 @@ export function WalletView({ wallet, visible }: { wallet: WalletStore; visible?:
             <input id="w3-send-amount" className={css.input} type="number" min="0" step="0.001" value={amount}
               placeholder="0.0" onChange={(event) => setAmount(event.target.value)} />
           </div>
+          <div className={css.field}>
+            <label className={css.label} htmlFor="w3-send-pw">{t('walletSendPassword')}</label>
+            <input id="w3-send-pw" className={css.input} type="password" value={sendPassword}
+              placeholder={t('walletSendPasswordPlaceholder')} onChange={(event) => setSendPassword(event.target.value)} />
+          </div>
+          <div className={css.hint}>{t('walletSendPasswordHint')}</div>
           {sendError !== null && <div className={css.error}>{sendError}</div>}
           {signature !== null && (
             <a className={css.success} href={`${EXPLORER}/tx/${signature}?cluster=devnet`} target="_blank" rel="noreferrer noopener">

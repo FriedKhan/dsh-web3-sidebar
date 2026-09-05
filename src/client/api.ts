@@ -383,8 +383,10 @@ export const api = {
   walletForget: () => call<{ ok: true }>('wallet.forget', {}),
   /** The active wallet's on-chain balance (lamports + SOL). */
   walletBalance: (signal?: AbortSignal) => call<WalletBalanceWire>('wallet.balance', {}, signal),
-  /** Sign and broadcast a SOL transfer from the unlocked wallet. */
-  walletSend: (to: string, amountSol: number) => call<{ signature: string }>('wallet.send', { to, amountSol }),
+  /** Sign and broadcast a SOL transfer. The password re-authorizes the
+   *  transfer host-side (the key is decrypted per send), so an unlocked
+   *  session alone cannot move value. */
+  walletSend: (to: string, amountSol: number, password: string) => call<{ signature: string }>('wallet.send', { to, amountSol, password }),
 }
 
 /** Absolute URL of the media route for one path (images only). */

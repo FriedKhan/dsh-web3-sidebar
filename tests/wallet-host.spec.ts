@@ -67,4 +67,16 @@ describe('wallet-host keystore', () => {
   it('rejects an unrecognized secret', async () => {
     await expect(createWalletHost(RPC).importWallet('not a real key', PASS)).rejects.toBeInstanceOf(WalletError)
   })
+
+  it('send fails closed on a wrong password before any network call', async () => {
+    // send() decrypts the keystore with the supplied password FIRST (before the
+    // recipient is even parsed or the RPC contacted), so a wrong password
+    // rejects with bad-password — proving an unlocked in-memory session alone
+    // cannot move value. The unroutable RPC guarantees a network attempt would
+    // fail with something other than bad-password.
+    const host = createWalletHost('http://127.0.0.1:1') // must never be contacted
+    await host.create(PASS)
+    await host.unlock(PASS) // even while unlocked...
+    await expect(host.send('any-recipient', 0.001, 'wrong-password')).rejects.toMatchObject({ code: 'bad-password' })
+  })
 })

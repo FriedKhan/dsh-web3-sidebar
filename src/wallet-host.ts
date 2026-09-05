@@ -68,7 +68,6 @@ const scrypt = promisify(scryptCb) as (password: string, salt: Buffer, keyLen: n
 // keystore while staying responsive on unlock. maxmem is raised to fit N.
 const KDF = { N: 1 << 15, r: 8, p: 1, keyLen: 32, maxmem: 256 * 1024 * 1024 }
 const SOLANA_DERIVATION = "m/44'/501'/0'/0'"
-const MEMO = "Sign-in to DSH Web3"
 
 function walletsDir(): string {
   const env = process.env.DSH_HOME
@@ -143,7 +142,7 @@ export function createWalletHost(rpcUrl: string): {
   lock(): void
   forget(): Promise<void>
   balance(): Promise<{ lamports: number; sol: number }>
-  send(to: string, sol: number): Promise<{ signature: string }>
+  send(to: string, sol: number, password: string): Promise<{ signature: string }>
 } {
   // The plaintext keypair, present ONLY while unlocked. Never leaves the host.
   let unlocked: { keypair: Keypair; meta: WalletMeta } | undefined
@@ -171,9 +170,17 @@ export function createWalletHost(rpcUrl: string): {
     return meta
   }
 
-  const requireUnlocked = (): Keypair => {
-    if (unlocked === undefined) throw new WalletError('locked', 'the wallet is locked')
-    return unlocked.keypair
+  /** Re-derive the signing keypair from the keystore for the CURRENT active
+   *  wallet by decrypting with `password`. Every value transfer re-authenticates
+   *  this way rather than trusting the in-memory unlock: a model with a shell on
+   *  this machine could reach the loopback send route, but without the password
+   *  it cannot decrypt the key, so it cannot sign a transfer. */
+  const signingKeypair = async (password: string): Promise<Keypair> => {
+    const address = unlocked?.meta.address ?? await readActive()
+    if (address === undefined) throw new WalletError('no-wallet', 'no wallet is stored')
+    const keystore = await readKeystore(address)
+    const secret = await decryptSecret(keystore, password)
+    return Keypair.fromSecretKey(secret)
   }
 
   return {
@@ -220,14 +227,16 @@ export function createWalletHost(rpcUrl: string): {
       const lamports = await rpc().getBalance(new PublicKey(address))
       return { lamports, sol: lamports / LAMPORTS_PER_SOL }
     },
-    async send(to, sol) {
-      const keypair = requireUnlocked()
+    async send(to, sol, password) {
+      // Password-per-send: the key is decrypted from the keystore for THIS
+      // transfer (a wrong password fails closed), so an unlocked in-memory
+      // session is not sufficient authorization to move value.
+      const keypair = await signingKeypair(password)
       let toPubkey: PublicKey
       try { toPubkey = new PublicKey(to.trim()) } catch { throw new WalletError('bad-recipient', 'invalid recipient address') }
       if (!(sol > 0) || !Number.isFinite(sol)) throw new WalletError('bad-amount', 'amount must be greater than zero')
       const lamports = Math.round(sol * LAMPORTS_PER_SOL)
       const tx = new Transaction().add(SystemProgram.transfer({ fromPubkey: keypair.publicKey, toPubkey, lamports }))
-      void MEMO
       try {
         const signature = await sendAndConfirmTransaction(rpc(), tx, [keypair])
         return { signature }

@@ -483,6 +483,9 @@ export const zh = {
   walletBalanceError: '余额不可用',
   walletExternalNote: '演示外部连接 — 链上操作已禁用。',
   walletExplorerAddress: '在浏览器中查看',
+  walletSendPassword: '钱包密码',
+  walletSendPasswordPlaceholder: '输入密码以授权转账',
+  walletSendPasswordHint: '每笔转账都需要密码 — 仅解锁不足以动用资金。',
 }
 
 /** The en dictionary (key-set-equal to zh, enforced by the type annotation). */
@@ -947,6 +950,9 @@ export const en: Record<keyof typeof zh, string> = {
   walletBalanceError: 'Balance unavailable',
   walletExternalNote: 'Demo external connection — on-chain actions are disabled.',
   walletExplorerAddress: 'View on explorer',
+  walletSendPassword: 'Wallet password',
+  walletSendPasswordPlaceholder: 'Enter your password to authorize',
+  walletSendPasswordHint: 'Every transfer requires your password — an unlocked session alone cannot move funds.',
 }
 
 /**

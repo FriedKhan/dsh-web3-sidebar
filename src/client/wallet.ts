@@ -53,7 +53,7 @@ export interface WalletStore {
   lock(): Promise<void>
   forget(): Promise<void>
   balance(signal?: AbortSignal): Promise<WalletBalanceWire>
-  send(to: string, amountSol: number): Promise<{ signature: string }>
+  send(to: string, amountSol: number, password: string): Promise<{ signature: string }>
 }
 
 const BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
@@ -150,7 +150,7 @@ export function createWalletStore(): WalletStore {
       await refresh()
     },
     balance: (signal) => api.walletBalance(signal),
-    send: (to, amountSol) => api.walletSend(to, amountSol),
+    send: (to, amountSol, password) => api.walletSend(to, amountSol, password),
   }
 }
 

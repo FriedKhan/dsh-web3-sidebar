@@ -476,4 +476,7 @@ export const vi: Record<string, string> = {
   walletBalanceError: 'Balance unavailable',
   walletExternalNote: 'Demo external connection — on-chain actions are disabled.',
   walletExplorerAddress: 'View on explorer',
+  walletSendPassword: 'Wallet password',
+  walletSendPasswordPlaceholder: 'Enter your password to authorize',
+  walletSendPasswordHint: 'Every transfer requires your password — an unlocked session alone cannot move funds.',
 }
